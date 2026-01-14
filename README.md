@@ -33,8 +33,8 @@ const converter = await KanaBarum.init();
 
 // 인사말
 converter("おはよう"); // => "오하요"
-converter("こんにちは"); // => "콘니치와"
-converter("こんばんは"); // => "콤방와"
+converter("こんにちは"); // => "곤니치와"
+converter("こんばんは"); // => "곰방와"
 converter("ありがとう"); // => "아리가토"
 converter("すみません"); // => "스미마셍"
 
@@ -44,6 +44,10 @@ converter("しゅくだい"); // => "슈쿠다이"
 converter("ちょっと"); // => "춋토"
 converter("きゅう"); // => "큐"
 converter("りょこう"); // => "료코"
+
+// つ 발음
+converter("つき"); // => "츠키"
+converter("つなみ"); // => "쓰나미"
 
 // 촉음
 converter("きって"); // => "킷테"
@@ -84,9 +88,9 @@ converter("パーティー"); // => "파티"
 converter("ゲーム"); // => "게무"
 
 // 커스텀 사전
-converter("とうきょう"); // => "도쿄"
 converter("すみません"); // => "스미마셍"
-converter("こんばんは"); // => "콤방와"
+converter("かわいい"); // => "카와이"
+converter("はひふへほ"); // => "하히후헤호"
 
 // 한자포함
 converter("誕生日(たんじょうび)"); // => "誕生日(탄죠비)"

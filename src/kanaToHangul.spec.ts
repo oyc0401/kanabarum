@@ -24,7 +24,7 @@ describe("kanaToHangul", () => {
     expect(converter("さようなら")).toBe("사요나라"); // おう/よう 장음은 제거
     expect(converter("ありがとう")).toBe("아리가토"); // とう -> と
     expect(converter("おはよう")).toBe("오하요"); // よう -> よ
-    expect(converter("こんばんは")).toBe("콤방와"); 
+    expect(converter("こんばんは")).toBe("곰방와"); 
     expect(converter("すみません")).toBe("스미마셍"); 
   });
 
@@ -143,6 +143,7 @@ describe("kanaToHangul", () => {
 
   it("つ", () => {
     expect(converter("つき")).toBe("츠키");
+    expect(converter("つなみ")).toBe("쓰나미");
   });
 
   it("장음 아닌것", () => {
@@ -176,7 +177,7 @@ describe("kanaToHangul", () => {
       expect(converter("わたしはがくせいです")).toBe("와타시와가쿠세데스"); // せい drop
       expect(converter("これはペンです")).toBe("코레와펜데스");
       expect(converter("きょうはあつい")).toBe("쿄와아츠이"); // きょう -> きょ
-      expect(converter("こんにちは")).toBe("콘니치와"); // 実発音
+      expect(converter("こんにちは")).toBe("곤니치와"); // 実発音
     });
 
     it("particle: へ as 'e' when used as direction marker", () => {
@@ -214,7 +215,7 @@ describe("kanaToHangul", () => {
   it("grammar: polite/auxiliary long-vowel-like endings (でしょう / ましょう / ましょうか)", () => {
     // でしょう: でしょ + う(drop) = でしょ
     expect(converter("そうでしょう")).toBe("소데쇼");
-    expect(converter("いいでしょうか")).toBe("이데쇼카");
+    expect(converter("いいでしょうか")).toBe("이이데쇼카");
     // ましょう: ましょ + う(drop) = ましょ
     expect(converter("いきましょう")).toBe("이키마쇼");
     expect(converter("やりましょうか")).toBe("야리마쇼카");
@@ -426,7 +427,7 @@ describe("kanaToHangul2", () => {
       expect(converter("あなたはせいふくです")).toBe("아나타와세후쿠데스"); // せい drop
       expect(converter("それはノートです")).toBe("소레와노토데스"); // ー drop
       expect(converter("あしたはさむい")).toBe("아시타와사무이");
-      expect(converter("こんにちは")).toBe("콘니치와"); // 実発音
+      expect(converter("こんにちは")).toBe("곤니치와"); // 実発音
     });
 
     it("particle: へ as 'e' when used as direction marker", () => {
@@ -889,8 +890,8 @@ describe("kanaToHangul - loanword hard cases", () => {
 describe("kanaToHangul - README samples", () => {
   it("greetings", () => {
     expect(converter("おはよう")).toBe("오하요");
-    expect(converter("こんにちは")).toBe("콘니치와");
-    expect(converter("こんばんは")).toBe("콤방와");
+    expect(converter("こんにちは")).toBe("곤니치와");
+    expect(converter("こんばんは")).toBe("곰방와");
     expect(converter("ありがとう")).toBe("아리가토");
     expect(converter("すみません")).toBe("스미마셍");
   });
@@ -1155,7 +1156,8 @@ describe("kanaToHangul - grammar extreme edge cases", () => {
   // --------------------
   it("でしょう / ましょう should drop trailing う", () => {
     expect(converter("そうでしょう")).toBe("소데쇼");
-    expect(converter("いいでしょうか")).toBe("이데쇼카");
+    expect(converter("いいでしょうか")).toBe("이이데쇼카");
+    expect(converter("いいんですか")).toBe("이인데스카");
     expect(converter("いきましょう")).toBe("이키마쇼");
     expect(converter("やりましょうか")).toBe("야리마쇼카");
   });
@@ -1298,11 +1300,12 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
       // expect(kanaToHangul("はははげんき")).toBe("하하와겡키"); // 근데 이건 하하하 건강해요 라고 해석 가능함.
 
       // "こんにちは/こんばんは" 같은 고정 표현
-      expect(converter("こんばんは")).toBe("콤방와"); // ん + ば => ㅁ, は->わ
-      expect(converter("こんにちは")).toBe("콘니치와");
+      expect(converter("こんばんは")).toBe("곰방와"); // ん + ば => ㅁ, は->わ
+      expect(converter("こんにちは")).toBe("곤니치와");
     });
 
     it("particle は next to small/long-vowel patterns", () => {
+      expect(converter("かわいい")).toBe("카와이");
       expect(converter("きょうはいい")).toBe("쿄와이이");
       expect(converter("おねえさんはやさしい")).toBe("오네상와야사시"); // ねえ drop + は->わ
     });
@@ -1435,7 +1438,7 @@ describe("grammar pronunciation edge cases (enable when rules are implemented)",
     expect(converter("あなたはせいふくです")).toBe("아나타와세후쿠데스"); // せい drop
     expect(converter("それはノートです")).toBe("소레와노토데스"); // ー drop
     expect(converter("あしたはさむい")).toBe("아시타와사무이");
-    expect(converter("こんにちは")).toBe("콘니치와"); // 実発音
+    expect(converter("こんにちは")).toBe("곤니치와"); // 実発音
   });
 });
 
@@ -1469,6 +1472,7 @@ describe("word-final は vs particle は", () => {
   it("particle は at the end / before predicate should be 'wa'", () => {
     expect(converter("わたしは")).toBe("와타시와");
     expect(converter("わたしはがくせい")).toBe("와타시와가쿠세");
+    expect(converter("わたしはにんげん")).toBe("와타시와닝겐");
   });
 });
 
