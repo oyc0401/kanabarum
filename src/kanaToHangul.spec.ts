@@ -652,7 +652,9 @@ describe("kanaToHangul - h row (は/ひ/ふ/へ/ほ + ひゃ/ひゅ/ひょ) stre
     expect(converter("ほ")).toBe("호");
 
     expect(converter("はひふへほ")).toBe("하히후헤호");
+    expect(converter("へほ")).toBe("헤호");
     expect(converter("は ひ ふ へ ほ")).toBe("하 히 후 헤 호");
+      
   });
 
   it("youon: ひゃ/ひゅ/ひょ -> 햐/휴/효", () => {

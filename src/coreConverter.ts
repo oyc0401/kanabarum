@@ -1,15 +1,6 @@
-export function coreKanaToHangulConvert(s: string): string {
-  // 특별 사전 매핑: 한국인이 익숙한 발음
-  const SPECIAL: Array<[string, string]> = [
-    ["とうきょう", "도쿄"],
-    ["いいでしょうか", "이데쇼카"],
-    ["いいでしょう", "이데쇼"],
-    ["こんにちは", "콘니치와"],
-    ["こんばんは", "콤방와"],
-    ["すみません", "스미마셍"],
-    ["はひふへほ", "하히후헤호"]
-  ];
+import { SpecialDictionary } from "./dictionary";
 
+export function coreKanaToHangulConvert(s: string): string {
   // --- Hangul utilities ---
   const HANGUL_BASE = 0xac00;
   const HANGUL_END = 0xd7a3;
@@ -313,7 +304,7 @@ export function coreKanaToHangulConvert(s: string): string {
 
   while (i < s.length) {
     let matchedSpecial = false;
-    for (const [k, v] of SPECIAL) {
+    for (const [k, v] of SpecialDictionary) {
       if (s.startsWith(k, i)) {
         // SPECIAL 값도 "가나" 형태로 들어와야 테이블이 자연스럽게 이어짐.
         // 여기서는 그대로 한글로 박는 기존 정책 유지.
