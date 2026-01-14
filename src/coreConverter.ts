@@ -1,11 +1,12 @@
 export function coreKanaToHangulConvert(s: string): string {
-  // 테스트 요구: 특별 사전 매핑
+  // 특별 사전 매핑: 한국인이 익숙한 발음
   const SPECIAL: Array<[string, string]> = [
     ["とうきょう", "도쿄"],
     ["いいでしょうか", "이데쇼카"],
     ["いいでしょう", "이데쇼"],
     ["こんにちは", "콘니치와"],
     ["こんばんは", "콤방와"],
+    ["すみません", "스미마셍"],
   ];
 
   // --- Hangul utilities ---

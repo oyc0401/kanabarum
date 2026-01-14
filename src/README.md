@@ -49,7 +49,9 @@ pnpm login              # 최초 1회 (npm CLI 사용 시 `npm login`)
 pnpm publish --access public
 ```
 
-- `prepublishOnly` 스크립트가 자동으로 `clean`과 `build`를 수행하므로 별도 준비 없이 `npm publish`만 실행하면 됩니다.
+- 2단계 인증(2FA)이 켜져 있다면 `pnpm publish --otp <6자리>` 형태로 OTP를 함께 전달해야 합니다.
+- Automation 토큰을 활용하려면 npm Access Tokens에서 `bypass 2FA`가 허용된 토큰을 생성한 뒤 `NPM_TOKEN` 환경변수로 설정하세요.
+- `prepublishOnly` 스크립트가 자동으로 `clean`과 `build`를 수행하므로 별도 준비 없이 `pnpm publish`만 실행하면 됩니다.
 
 ## 구조
 
@@ -63,3 +65,4 @@ pnpm publish --access public
 - `src/tokenizer.ts`: kuromoji 의존성 초기화 및 재사용 로직
 - `src/index.ts`: 패키지 진입점, 공개 API를 재-export
 - `src/kanaToHangul.spec.ts`: 변환 로직 검증용 테스트 (배포 대상 아님)
+- `dist/`: `pnpm build` 결과물이 위치 (gitignore 대상, 배포 시 포함)

@@ -1,7 +1,7 @@
 # Kanabarum
 
 일본어 가나 문자열을 한국어 발음 표기로 바꿔주는 TypeScript 라이브러리입니다.  
-`kuromoji` 품사 분석을 이용해 は/へ/を 같은 조사만 안전하게 치환합니다.
+`kuromoji` 품사 분석을 이용해 は/へ 같은 조사를 안전하게 치환합니다.
 
 ## 설치
 
@@ -13,37 +13,101 @@ npm install kanabarum
 
 ## 사용법
 
-### 1) 간편 호출 (lazy init)
+### 간편 호출
+
+초기화 없이 즉시 사용도 가능합니다.
 
 ```ts
 import { kanaToHangul } from "kanabarum";
 
-const text = await kanaToHangul("さようなら");
-console.log(text); // => "사요나라"
+const text = await kanaToHangul("さようなら"); 
+// => "사요나라"
 ```
 
-### 2) 명시 초기화 후 동기 호출
+### 초기화 후 호출
 
 ```ts
 import { KanaBarum } from "kanabarum";
 
 const converter = await KanaBarum.init();
+
+// 인사말
+converter("おはよう"); // => "오하요"
+converter("こんにちは"); // => "콘니치와"
+converter("こんばんは"); // => "콤방와"
 converter("ありがとう"); // => "아리가토"
+converter("すみません"); // => "스미마셍"
+
+// 요음
+converter("きゃく"); // => "캬쿠"
+converter("しゅくだい"); // => "슈쿠다이"
+converter("ちょっと"); // => "춋토"
+converter("きゅう"); // => "큐"
+converter("りょこう"); // => "료코"
+
+// 촉음
+converter("きって"); // => "킷테"
+converter("がっこう"); // => "각코"
+converter("けっこん"); // => "켓콘"
+converter("ざっし"); // => "잣시"
+converter("やっちゃった"); // => "얏챳타"
+
+// ん 규칙
+converter("にゃんこ"); // => "냥코"
+converter("さんぽ"); // => "삼포"
+converter("しんぶん"); // => "심분"
+converter("りんご"); // => "링고"
+converter("まんいち"); // => "만이치"
+
+// 조사치환 は → わ
+converter("わたしはがくせいです"); // => "와타시와가쿠세데스"
+converter("これはペンです"); // => "코레와펜데스"
+converter("きょうはあつい"); // => "쿄와아츠이"
+
+// 조사치환 へ → え
+converter("がっこうへいく"); // => "각코에이쿠"
+converter("うちへかえる"); // => "우치에카에루"
+converter("かみへむかう"); // => "카미에무카우"
+
+// 장모음(おう/よう/えい) 축약
+converter("さようなら"); // => "사요나라"
+converter("せんせい"); // => "센세"
+converter("おおさか"); // => "오사카"
+
+// 가타카나
+converter("カタカナ"); // => "카타카나"
+converter("コーヒー"); // => "코히"
+converter("アイドル"); // => "아이도루"
+
+// 장음 기호 변형(ー variants)
+converter("コーヒー"); // => "코히"
+converter("パーティー"); // => "파티"
+converter("ゲーム"); // => "게무"
+
+// 커스텀 사전
+converter("とうきょう"); // => "도쿄"
+converter("すみません"); // => "스미마셍"
+converter("こんばんは"); // => "콤방와"
+
+// 한자포함
+converter("誕生日(たんじょうび)"); // => "誕生日(탄죠비)"
+converter("第3回(だいさんかい)"); // => "第3回(다이상카이)"
+converter("京都(きょうと)"); // => "京都(쿄토)"
+
+// 특수문자, 마침표
+converter("コーヒー, ください。"); // => "코히, 쿠다사이。"
+converter("「きょう」"); // => "「쿄」"
+converter("（がっこう）"); // => "（각코）"
+
+// 전각/반각
+converter("ﾊﾝｸﾞﾙ"); // => "한구루"
+converter("ｶﾀｶﾅ"); // => "카타카나"
+converter("ﾄ-ｷｮ-"); // => "토ー쿄ー"
+
+// NFC 합성
+converter("がくせい"); // => "가쿠세"
+converter("ぱｰてぃｰ"); // => "파티"
+converter("べんごし"); // => "벵고시"
+
+
 ```
-
-## API
-
-- `kanaToHangul(input: string): Promise<string>`  
-  첫 호출 시 자동으로 tokenizer를 초기화하고 이후에는 같은 인스턴스를 재사용합니다.
-- `KanaBarum.init(): Promise<KanaToHangul>` (`KanaToHangulMaker` alias 제공)  
-  SSR 환경 등에서 초기화 시점을 직접 제어하고 싶을 때 사용합니다.
-
-## 테스트
-
-```bash
-pnpm test
-```
-
-`src/kanaToHangul.spec.ts`에 있는 Vitest 스펙이 실행됩니다.
-
-개발 및 배포용 세부 가이드는 `src/README.md`를 참고하세요.

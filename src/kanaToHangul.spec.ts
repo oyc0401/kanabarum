@@ -24,6 +24,8 @@ describe("kanaToHangul", () => {
     expect(converter("さようなら")).toBe("사요나라"); // おう/よう 장음은 제거
     expect(converter("ありがとう")).toBe("아리가토"); // とう -> と
     expect(converter("おはよう")).toBe("오하요"); // よう -> よ
+    expect(converter("こんばんは")).toBe("콤방와"); 
+    expect(converter("すみません")).toBe("스미마센"); 
   });
 
   it("youon (きゃ/しゅ/ちょ)", () => {
