@@ -1,6 +1,12 @@
+// coreConverter.ts
 import { SpecialDictionary } from "./dictionary";
+import { HARD_BOUNDARY_SURF, TokenSpan } from "./particleRewriter";
 
-export function coreKanaToHangulConvert(s: string): string {
+
+export function coreKanaToHangulConvert(
+  s: string,
+  opts?: { tokens?: TokenSpan[] },
+): string {
   // --- Hangul utilities ---
   const HANGUL_BASE = 0xac00;
   const HANGUL_END = 0xd7a3;
@@ -44,7 +50,7 @@ export function coreKanaToHangulConvert(s: string): string {
     return isHiragana(ch) || ch === "ー";
   }
 
-  // --- Tables ---
+  // --- Tables (당신 코드 그대로) ---
   type VowelMain = "a" | "i" | "u" | "e" | "o";
   type ConsClass =
     | "vowel"
@@ -157,7 +163,6 @@ export function coreKanaToHangulConvert(s: string): string {
     ぺ: { out: "페", vowelMain: "e", consClass: "p" },
     ぽ: { out: "포", vowelMain: "o", consClass: "p" },
 
-    // 이거는 う에 탁점 붙인 유니코드임.
     ゔ: { out: "부", vowelMain: "u", consClass: "b" },
   };
 
@@ -291,10 +296,81 @@ export function coreKanaToHangulConvert(s: string): string {
     return cons === "m" || cons === "b" || cons === "p";
   }
 
-  const isBoundary = (ch: string | undefined): boolean => {
-    if (!ch) return true;
-    return /\s|[、。！？!?\(\)\[\]{}「」『』（）【】]/.test(ch);
-  };
+  // 토큰 컨텍스트 탐색용
+  const tokens = opts?.tokens ?? null;
+  let tokIdx = 0;
+
+  function syncTokenIndex(charIndex: number) {
+    if (!tokens) return;
+    while (tokIdx + 1 < tokens.length && tokens[tokIdx].end <= charIndex) {
+      tokIdx++;
+    }
+  }
+
+  function curToken(charIndex: number): TokenSpan | null {
+    if (!tokens) return null;
+    syncTokenIndex(charIndex);
+    const t = tokens[tokIdx];
+    if (t && t.start <= charIndex && charIndex < t.end) return t;
+    return null;
+  }
+
+  function prevToken(): TokenSpan | null {
+    if (!tokens) return null;
+    return tokIdx - 1 >= 0 ? tokens[tokIdx - 1] : null;
+  }
+  function nextToken(): TokenSpan | null {
+    if (!tokens) return null;
+    return tokIdx + 1 < tokens.length ? tokens[tokIdx + 1] : null;
+  }
+
+  // ✅ 유성화 차단 next
+  const INITIAL_VOICING_BLOCK_NEXT = new Set(["い", "ひ", "ん", "て"]);
+
+  function peekNextMoraKeySkippingChoonpu(fromIdx: number): string | null {
+    let j = fromIdx;
+    while (j < s.length && s[j] === "ー") j++;
+    const m = readMoraAt(j);
+    return m?.key ?? null;
+  }
+
+  // ✅ "-san" 판별(당신 코드 그대로 유지)
+  const SAN_PARTICLES = new Set(["は", "わ", "へ", "え", "を", "お"]);
+  function isSanHonorificAt(idxN: number): boolean {
+    const t = curToken(idxN);
+    if (!t) return false;
+    if (idxN < 1 || s[idxN - 1] !== "さ") return false;
+
+    const local = s.slice(t.start, idxN + 1);
+    if (!local.endsWith("さん")) return false;
+
+    const hasPrefixInsideToken = (idxN - 1) > t.start;
+    const p = prevToken();
+    const prevIsAttachable =
+      !!p && p.end === t.start && p.surface.length > 0 && !HARD_BOUNDARY_SURF.has(p.surface);
+
+    if (!hasPrefixInsideToken && !prevIsAttachable) return false;
+
+    const n = nextToken();
+    if (!n) return true;
+    if (n.pos === "記号" && HARD_BOUNDARY_SURF.has(n.surface)) return true;
+    if (n.pos === "助詞" && SAN_PARTICLES.has(n.surface)) return true;
+    return false;
+  }
+
+  // ✅ 새로 추가: 유성화 대상 토큰인지 판정
+  function isVoicingEligibleTokenStart(t: TokenSpan | null): boolean {
+    if (!t) return false;
+    // 기호/조사/조동사에는 유성화 절대 금지 (京都(きょうと)에서 'と'가 助詞로 뜨는 케이스 방지)
+    if (t.pos === "記号") return false;
+    if (t.pos === "助詞") return false;
+    if (t.pos === "助動詞") return false;
+
+    // 원문이 카타카나(대개 외래어)이면 유성화 금지 (ノート 등)
+    if (t.originHadKatakana) return false;
+
+    return true;
+  }
 
   let out = "";
   let i = 0;
@@ -303,12 +379,26 @@ export function coreKanaToHangulConvert(s: string): string {
   let leadingSokuon = false;
 
   while (i < s.length) {
-    let matchedSpecial = false;
+    // 토큰 기반 "단어 시작" 정의: i가 content 토큰 start면 true
+     let atTokenStart = false;
+    let tokForI: TokenSpan | null = null;
+
+    if (tokens) {
+      tokForI = curToken(i);
+      // ✅ 토큰 시작이면 일단 단어 시작 후보로 인정
+      atTokenStart = !!tokForI && tokForI.start === i;
+
+      // ✅ 유성화/단어시작 판정에서 "기호"와 "원문 카타카나 토큰"만 컷
+      if (tokForI?.pos === "記号") atTokenStart = false;
+    } else {
+      atTokenStart = i === 0;
+    }
+
+    // SpecialDictionary
+     let matchedSpecial = false;
     for (const [k, v] of SpecialDictionary) {
       if (s.startsWith(k, i)) {
-        // SPECIAL 값도 "가나" 형태로 들어와야 테이블이 자연스럽게 이어짐.
-        // 여기서는 그대로 한글로 박는 기존 정책 유지.
-        out += v
+        out += v;
         i += k.length;
         lastMora = null;
         matchedSpecial = true;
@@ -383,6 +473,7 @@ export function coreKanaToHangulConvert(s: string): string {
       continue;
     }
 
+    // おお...
     if (ch === "お" && s[i + 1] === "お") {
       let j = i;
       while (s[j] === "お") j++;
@@ -399,17 +490,17 @@ export function coreKanaToHangulConvert(s: string): string {
 
     const mora = readMoraAt(i);
     if (!mora) {
-      out += ch;
+      out += s[i];
       i += 1;
       lastMora = null;
       continue;
     }
 
+    // ん
     if (mora.key === "ん") {
       const next = readMoraAt(i + 1);
       const nextInfo = next?.info;
 
-      let jong: number = JONG.N;
       const hasPrevHangul =
         out.length > 0 && isHangulSyllable(out[out.length - 1]);
       if (!hasPrevHangul) {
@@ -419,37 +510,15 @@ export function coreKanaToHangulConvert(s: string): string {
         continue;
       }
 
-      // ✅ "さん"(호칭)일 때만 '상'(받침 ㅇ)
-      // 주의: 조사 리라이트가 먼저라서 다음 글자가 'は'가 아니라 'わ'일 수 있음!
-      if (lastMora?.out === "사") {
-        const nextCh = s[i + 1];
-
-        const isBoundaryOrEnd =
-          !nextCh || /\s|[、。！？!?\(\)\[\]{}「」『』（）【】]/.test(nextCh);
-
-        // 원문 조사 + 리라이트된 조사까지 모두 허용
-        const isParticleAfterSan =
-          nextCh === "は" ||
-          nextCh === "へ" ||
-          nextCh === "を" ||
-          nextCh === "わ" ||
-          nextCh === "え" ||
-          nextCh === "お";
-
-        // ✅ 핵심: "사" 앞에 뭔가가 있어야(-san) 인정.
-        // out는 지금 "...사" 까지 찍힌 상태.
-        // "さんは"는 out === "사"라서 여기서 걸러져야 함.
-        const hasPrefixBeforeSan = out.length >= 2;
-
-        // 숫자/로마자 앞도 허용해야 "3さん" => 3상 유지됨
-        if (hasPrefixBeforeSan && (isBoundaryOrEnd || isParticleAfterSan)) {
-          out = replaceLastHangul(out, JONG.NG); // 사 + ん => 상
-          i += 1;
-          continue;
-        }
+      // ✅ 토큰 컨텍스트 기반 "-san" → '상'
+      if (lastMora?.out === "사" && isSanHonorificAt(i)) {
+        out = replaceLastHangul(out, JONG.NG);
+        i += 1;
+        continue;
       }
 
-      // --- 기존 ん 규칙 ---
+      // --- 기존 ん 동화 규칙 ---
+      let jong: number = JONG.N;
       if (!next || !nextInfo || !isKana(next.key[0])) {
         jong = lastMora?.wasYouon ? JONG.NG : JONG.N;
       } else {
@@ -479,12 +548,57 @@ export function coreKanaToHangulConvert(s: string): string {
       continue;
     }
 
-    out += info.out;
-    lastMora = info;
+    // ✅ 단어(토큰) 시작 유성화: と/こ만 + 예외(이/히/ん/테) + (앞이 っ이면 금지)
+    let outSyl = info.out;
+    if (atTokenStart && (mora.key === "と" || mora.key === "こ")) {
+      const prevIsSokuon = i > 0 && s[i - 1] === "っ";
+
+      const nextKey = peekNextMoraKeySkippingChoonpu(i + mora.len);
+      const blockedByNext =
+        !!nextKey && INITIAL_VOICING_BLOCK_NEXT.has(nextKey);
+
+      const isKou = mora.key === "こ" && s[i + mora.len] === "う";
+
+      // ✅ 추가: "진짜 조사 と/こ"로 쓰인 경우만 유성화 차단
+      // - 현재 토큰이 1글자 'と'/'こ'이고,
+      // - 이전 토큰이 내용어(명사/동사/형용사 등)면 => 조사로 판단 => 유성화 금지
+      let blockedByParticleUsage = false;
+      if (tokens && tokForI) {
+        const isSingleCharToken = tokForI.surface.length === 1;
+        const tokenMatchesMora = tokForI.surface === mora.key;
+
+        if (isSingleCharToken && tokenMatchesMora) {
+          const p = prevToken(); // curToken(i) 호출로 tokIdx는 sync된 상태
+          const prevLooksLikeContent =
+            !!p &&
+            p.pos !== "記号" &&
+            p.pos !== "助詞" &&
+            p.pos !== "助動詞" &&
+            !HARD_BOUNDARY_SURF.has(p.surface);
+
+          if (prevLooksLikeContent) blockedByParticleUsage = true;
+        }
+      }
+
+  const allowVoicing =
+    !prevIsSokuon &&
+    !blockedByNext &&
+    !isKou &&
+    !blockedByParticleUsage;
+
+  if (allowVoicing) {
+    if (mora.key === "と") outSyl = "도";
+    else if (mora.key === "こ") outSyl = "고";
+  }
+}
+
+    out += outSyl;
+    lastMora = { ...info, out: outSyl };
 
     const next1 = s[i + mora.len];
     const afterLen = s[i + mora.len + 1];
 
+    // o + う 드랍
     if (next1 === "う" && info.vowelMain === "o") {
       i += mora.len + 1;
       continue;
@@ -515,13 +629,11 @@ export function coreKanaToHangulConvert(s: string): string {
         i += mora.len + 1;
         continue;
       } else if (mora.key === "き") {
-        // "おおきい" 줄임 정책 유지: 뒤에 이어지면 keep
-        if (isBoundary(afterLen) || !afterLen) {
+        if (!afterLen) {
           i += mora.len + 1;
           continue;
         }
       } else if (mora.key === "し") {
-        // しい adjectives pronounce as '시'
         i += mora.len + 1;
         continue;
       }
@@ -537,6 +649,8 @@ export function coreKanaToHangulConvert(s: string): string {
 
   return out;
 }
+
+
 
 function hiraToKata(hira: string): string {
   const c = hira.codePointAt(0)!;

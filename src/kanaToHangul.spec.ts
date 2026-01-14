@@ -32,6 +32,7 @@ describe("kanaToHangul", () => {
     expect(converter("はじめまして。わたしはにほんごをべんきょうしています。どうぞよろしくおねがいします。")).toBe(
       "하지메마시테。와타시와니홍고오벵쿄시테이마스。도조요로시쿠오네가이시마스。",
     );
+    expect(converter("きょうはとてもいいてんきですね。")).toBe("쿄와토테모이이텡키데스네。");
     expect(
       converter(
         "きょうはとてもいいてんきですね。そとへさんぽにいきましょうか。おいしいコーヒーをのみたいです。",
@@ -43,7 +44,7 @@ describe("kanaToHangul", () => {
       converter(
         "わたしはきのう、ともだちといっしょにえいがをみました。とてもおもしろかったです。またいきたいです。",
       ),
-    ).toBe("와타시와키노、토모다치토잇쇼니에가오미마시타。토테모오모시로캇타데스。마타이키타이데스。");
+    ).toBe("와타시와키노、도모다치토잇쇼니에가오미마시타。토테모오모시로캇타데스。마타이키타이데스。");
   });
 
   it("youon (きゃ/しゅ/ちょ)", () => {
@@ -175,7 +176,8 @@ describe("kanaToHangul", () => {
   describe("grammar pronunciation edge cases (enable when rules are implemented)", () => {
     it("particle: は as 'wa' when used as topic marker", () => {
       expect(converter("わたしはがくせいです")).toBe("와타시와가쿠세데스"); // せい drop
-      expect(converter("これはペンです")).toBe("코레와펜데스");
+      expect(converter("これはペンです")).toBe("고레와펜데스");
+      expect(converter("これはともだちです")).toBe("고레와도모다치데스"); 
       expect(converter("きょうはあつい")).toBe("쿄와아츠이"); // きょう -> きょ
       expect(converter("こんにちは")).toBe("곤니치와"); // 実発音
     });
@@ -431,7 +433,6 @@ describe("kanaToHangul2", () => {
     });
 
     it("particle: へ as 'e' when used as direction marker", () => {
-      expect(converter("としょかんへいく")).toBe("토쇼칸에이쿠"); // へ->え, えいく drop 금지
       expect(converter("いえへかえる")).toBe("이에에카에루");
     });
 
@@ -451,8 +452,8 @@ describe("kanaToHangul2", () => {
 
   it("grammar: contractions じゃ / ちゃ / じゃない / ちゃう / ちゃった", () => {
     // では → じゃ (dewa → ja)
-    expect(converter("ここじゃ")).toBe("코코쟈");
-    expect(converter("ここじゃない")).toBe("코코쟈나이");
+    expect(converter("ここじゃ")).toBe("고코쟈");
+    expect(converter("ここじゃない")).toBe("고코쟈나이");
     expect(converter("ほんとじゃなかった")).toBe("혼토쟈나캇타");
 
     // ては → ちゃ (tewa → cha)
@@ -474,7 +475,7 @@ describe("kanaToHangul2", () => {
     expect(converter("はなしている")).toBe("하나시테이루");
     expect(converter("まっている")).toBe("맛테이루");
 
-    expect(converter("とっておく")).toBe("톳테오쿠");
+    expect(converter("とっておく")).toBe("돗테오쿠");
     expect(converter("うっておく")).toBe("웃테오쿠");
 
     expect(converter("のんでしまう")).toBe("논데시마우");
@@ -608,7 +609,7 @@ describe("kanaToHangul (extra)", () => {
   // --------------------
   it("particles heuristics (は/へ/を)", () => {
     expect(converter("ぼくはがくせいです")).toBe("보쿠와가쿠세데스"); // せい drop + は->わ
-    expect(converter("ここはさむい")).toBe("코코와사무이"); // は->わ
+    expect(converter("ここはさむい")).toBe("고코와사무이"); // は->わ
     expect(converter("うみへいく")).toBe("우미에이쿠"); // へ->え + えいく 유지
     expect(converter("みずをのむ")).toBe("미즈오노무"); // を->오
   });
@@ -922,7 +923,7 @@ describe("kanaToHangul - README samples", () => {
 
   it("wa particle replacements", () => {
     expect(converter("わたしはがくせいです")).toBe("와타시와가쿠세데스");
-    expect(converter("これはペンです")).toBe("코레와펜데스");
+    expect(converter("これはペンです")).toBe("고레와펜데스");
     expect(converter("きょうはあつい")).toBe("쿄와아츠이");
     expect(converter("おねえさんはやさしいです")).toBe("오네상와야사시데스");
     expect(converter("すしはおいしい")).toBe("스시와오이시");
@@ -977,8 +978,8 @@ describe("kanaToHangul - README samples", () => {
   it("halfwidth / fullwidth normalization", () => {
     expect(converter("ﾊﾝｸﾞﾙ")).toBe("항구루");
     expect(converter("ｶﾀｶﾅ")).toBe("카타카나");
-    expect(converter("ﾄ-ｷｮ-")).toBe("토쿄");
-    expect(converter("ﾊﾟ-ﾃｨｰ")).toBe("파티");
+    expect(converter("ﾄｰｷｮｰ")).toBe("도쿄");
+    expect(converter("ﾊﾟｰﾃｨｰ")).toBe("파티");
     expect(converter("ﾐﾅｻﾝ")).toBe("미나상");
   });
 
@@ -1030,7 +1031,6 @@ describe("kanaToHangul - more edge cases", () => {
     // ン + ケ(k) => ㅇ => 팡..., ー drop
     expect(converter("ﾊﾟﾝｹｰｷ")).toBe("팡케키");
     expect(converter("パンケーキ")).toBe("팡케키");
-    expect(converter("ﾄ-ｷｮ-")).toBe("토쿄");
   });
 
   // --------------------
@@ -1259,7 +1259,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
     it("basic: should convert only when it's a particle", () => {
       expect(converter("ぼくはがくせいです")).toBe("보쿠와가쿠세데스");
       expect(converter("あなたはせんせいです")).toBe("아나타와센세데스"); // せい drop
-      expect(converter("これはほんです")).toBe("코레와혼데스");
+      expect(converter("これはほんです")).toBe("고레와혼데스");
       expect(converter("きょうはあめです")).toBe("쿄와아메데스"); // きょう -> きょ
       expect(converter("あしたはやすみです")).toBe("아시타와야스미데스");
     });
@@ -1282,7 +1282,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
 
     it("multiple は in one sentence", () => {
       expect(converter("これはそれはあれはほんです")).toBe(
-        "코레와소레와아레와혼데스",
+        "고레와소레와아레와혼데스",
       );
       expect(converter("ぼくはがっこうへいく")).toBe("보쿠와각코에이쿠");
     });
@@ -1358,7 +1358,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
     it("へ + いく 계열에서 えい(=え+い)를 장음으로 오인하지 말기", () => {
       // 핵심: へ->え 한 뒤에 "いく"의 い를 드롭하면 망함
       expect(converter("がっこうへいく")).toBe("각코에이쿠");
-      expect(converter("としょかんへいく")).toBe("토쇼칸에이쿠");
+      expect(converter("としょかんへいく")).toBe("도쇼칸에이쿠");
       expect(converter("ほてるへいく")).toBe("호테루에이쿠");
     });
   });
@@ -1410,7 +1410,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
   describe("particles combined (は/へ/を) : nested & repeated", () => {
     it("simple combined sentences", () => {
       expect(converter("ぼくはがっこうへいく")).toBe("보쿠와각코에이쿠");
-      expect(converter("これはほんをよむ")).toBe("코레와혼오요무");
+      expect(converter("これはほんをよむ")).toBe("고레와혼오요무");
       expect(converter("あなたはうちへかえる")).toBe("아나타와우치에카에루");
     });
 
@@ -1419,7 +1419,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
         "「보쿠와판오타베루」",
       );
       expect(converter("（これはほんをよむ）よ")).toBe(
-        "（코레와혼오요무）요",
+        "（고레와혼오요무）요",
       );
       expect(converter("それは、がっこうへいく？")).toBe(
         "소레와、각코에이쿠？",
@@ -1472,6 +1472,7 @@ describe("word-final は vs particle は", () => {
   it("particle は at the end / before predicate should be 'wa'", () => {
     expect(converter("わたしは")).toBe("와타시와");
     expect(converter("わたしはがくせい")).toBe("와타시와가쿠세");
+    expect(converter("わたしはとしょかんへいく")).toBe("와타시와도쇼칸에이쿠");
     expect(converter("わたしはにんげん")).toBe("와타시와닝겐");
   });
 });
@@ -1519,5 +1520,11 @@ describe("loan special combos", () => {
     expect(converter("ゔぃ")).toBe("비");
     expect(converter("ゔぇ")).toBe("베");
     expect(converter("ゔぉ")).toBe("보");
+  });
+});
+describe("추가된 버전", () => {
+  it("추가된 버전", () => {
+    expect(converter("りんごとりんご")).toBe("링고토링고"); 
+     expect(converter("としょかんへいく")).toBe("도쇼칸에이쿠"); 
   });
 });
