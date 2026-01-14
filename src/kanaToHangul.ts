@@ -21,5 +21,8 @@ export function convertWithTokenizer(input: string, tokenizer: Tokenizer): strin
   const { rewritten, spans } = tokenizeAndRewriteParticles(normalized, hiragana, tokenizer);
 
   // ✅ rewritten + rewritten spans 로 core
-  return coreKanaToHangulConvert(rewritten, { tokens: spans });
+ return coreKanaToHangulConvert(rewritten, {
+    tokens: spans,
+    original: normalized, // ✅ 이게 핵심
+  });
 }

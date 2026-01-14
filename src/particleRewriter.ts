@@ -1,7 +1,38 @@
 // particleRewriter.ts
 import type kuromoji from "kuromoji";
 import type { Tokenizer } from "./tokenizer";
-import { SpecialDictionary } from "./dictionary";
+import { SpecialDictionary, SpecialDictionaryEntry } from "./dictionary";
+
+
+// --------------------------
+// local helper: toHiragana (protectedRanges는 hiraganaText 기준)
+// --------------------------
+function isKatakanaChar(ch: string) {
+  const c = ch.codePointAt(0)!;
+  return c >= 0x30a0 && c <= 0x30ff;
+}
+function toHiragana(s: string): string {
+  const n = s.normalize("NFKC");
+  return Array.from(n)
+    .map((ch) => {
+      if (!isKatakanaChar(ch)) return ch;
+      return String.fromCodePoint(ch.codePointAt(0)! - 0x60);
+    })
+    .join("");
+}
+
+function dictKeysForHiraganaText(dict: SpecialDictionaryEntry[]): string[] {
+  // hiraganaText에서 실제로 등장할 수 있는 키만 모으기:
+  // - entry.word 자체는 넣어도 되고(못 찾으면 무해)
+  // - hira:true면 toHiragana(word)를 추가로 넣는다
+  const keys: string[] = [];
+  for (const e of dict) {
+    keys.push(e.word);
+    if (e.hira) keys.push(toHiragana(e.word));
+  }
+  // 중복 제거
+  return [...new Set(keys)].filter(Boolean);
+}
 
 type Range = { start: number; end: number }; // [start, end)
 
@@ -126,9 +157,10 @@ export function rewriteParticlesFromTokenization(
   const hiraChars = Array.from(hiraganaText);
   const originChars = Array.from(originalText);
 
+  // entry 기반
   const protectedRanges = buildProtectedRanges(
     hiraganaText,
-    SpecialDictionary.map(([k]) => k),
+    dictKeysForHiraganaText(SpecialDictionary),
   );
 
   let out = "";
@@ -152,11 +184,9 @@ export function rewriteParticlesFromTokenization(
 
     const originHadKatakana = /[\u30A0-\u30FF]/.test(originSurf);
 
-    // 보호 구간이면 리라이트 금지 (UTF-16 기준 protectedRanges를 코드포인트로 변환 필요)
-    // buildProtectedRanges는 UTF-16 기준이므로, 별도 변환 필요
-    // 여기서는 hiraSurf 기준으로 직접 체크
-    const isProtected = SpecialDictionary.some(([k]) => hiraSurf.includes(k) || k.includes(hiraSurf));
-    if (isProtected && isProtectedSpan(protectedRanges, start, end)) {
+    // ✅ 불필요하고 위험한 isProtected(튜플 기반 + includes 난사) 제거
+    // protectedRanges 기반으로만 판단
+    if (isProtectedSpan(protectedRanges, start, end)) {
       const outCpStart = [...out].length;
       out += hiraSurf;
       spans.push({

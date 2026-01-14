@@ -1,15 +1,76 @@
 // coreConverter.ts
-import { SpecialDictionary } from "./dictionary";
+import { SpecialDictionary, SpecialDictionaryEntry } from "./dictionary";
 import { HARD_BOUNDARY_SURF, TokenSpan } from "./particleRewriter";
  import{ConsClass, MoraInfo, SINGLE,YOUON, LOAN, SMALL_Y, SMALL_V, U_DROP_KEYS} from "./mora"
 
+ // --------------------------
+// Kana normalize helpers
+// --------------------------
+function isHiraganaChar(ch: string) {
+  const c = ch.codePointAt(0)!;
+  return c >= 0x3040 && c <= 0x309f;
+}
+function isKatakanaChar(ch: string) {
+  const c = ch.codePointAt(0)!;
+  return c >= 0x30a0 && c <= 0x30ff;
+}
+function toHiraganaKey(s: string): string {
+  const n = s.normalize("NFKC");
+  return Array.from(n).map((ch) => (isKatakanaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! - 0x60) : ch)).join("");
+}
+function toKatakanaKey(s: string): string {
+  const n = s.normalize("NFKC");
+  return Array.from(n).map((ch) => (isHiraganaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! + 0x60) : ch)).join("");
+}
+
+type DictStream = "orig" | "rewritten";
+type CompiledDictItem = { keyChars: string[]; answer: string; stream: DictStream };
+
+function compileSpecialDictionary(dict: SpecialDictionaryEntry[]): CompiledDictItem[] {
+  const items: CompiledDictItem[] = [];
+
+  for (const e of dict) {
+    // 기본: exact word는 원본에서만
+    items.push({ keyChars: Array.from(e.word), answer: e.answer, stream: "orig" });
+
+    // hira:true => hiragana 스트림에서만 (입력 전체가 히라로 바뀌는 파이프라인이기 때문)
+    if (e.hira) {
+      const k = toHiraganaKey(e.word);
+      items.push({ keyChars: Array.from(k), answer: e.answer, stream: "rewritten" });
+    }
+
+    // kata:true => 원본에서만
+    if (e.kata) {
+      const k = toKatakanaKey(e.word);
+      items.push({ keyChars: Array.from(k), answer: e.answer, stream: "orig" });
+    }
+  }
+
+  // 긴 키 우선
+  items.sort((a, b) => b.keyChars.length - a.keyChars.length);
+  return items;
+}
+
+const COMPILED_SPECIAL_DICT = compileSpecialDictionary(SpecialDictionary);
+
+
+function isHiragana(ch: string): boolean {
+    const c = ch.codePointAt(0)!;
+    return c >= 0x3040 && c <= 0x309f;
+  }
+
+  function isKana(ch: string): boolean {
+    return isHiragana(ch) || ch === "ー";
+  }
+
 export function coreKanaToHangulConvert(
   s: string,
-  opts?: { tokens?: TokenSpan[] },
+  opts?: { tokens?: TokenSpan[]; original?: string },
 ): string {
   // 코드포인트 배열로 변환 (surrogate pair 문제 해결)
   const chars = Array.from(s);
-
+  const origChars = Array.from(opts?.original ?? s);
+  
   // --- Hangul utilities ---
   const HANGUL_BASE = 0xac00;
   const HANGUL_END = 0xd7a3;
@@ -169,18 +230,33 @@ export function coreKanaToHangulConvert(
       atTokenStart = i === 0;
     }
 
-    // SpecialDictionary
-     let matchedSpecial = false;
-    for (const [k, v] of SpecialDictionary) {
-      const kChars = [...k];
-      if (chars.slice(i, i + kChars.length).join("") === k) {
-        out += v;
-        i += kChars.length;
-        lastMora = null;
-        matchedSpecial = true;
-        break;
-      }
+    // --------------------------
+    // ✅ SpecialDictionary (entry 기반 + hira/kata 옵션)
+    // --------------------------
+    let matchedSpecial = false;
+
+    // 긴 키부터 순회하므로, 앞에서 걸리면 끝
+    for (const it of COMPILED_SPECIAL_DICT) {
+    const src = it.stream === "orig" ? origChars : chars; // chars=rewritten
+    const len = it.keyChars.length;
+    if (i + len > src.length) continue;
+
+    let ok = true;
+    for (let k = 0; k < len; k++) {
+      if (src[i + k] !== it.keyChars[k]) { ok = false; break; }
     }
+    if (!ok) continue;
+
+    out += it.answer;
+    i += len;
+
+    // 사전 치환은 단어 단위 => 상태 초기화
+    lastMora = null;
+    leadingSokuon = false;
+
+    matchedSpecial = true;
+    break;
+  }
     if (matchedSpecial) continue;
 
     if (chars.slice(i, i + 3).join("") === "ちゃん") {

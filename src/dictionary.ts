@@ -1,12 +1,20 @@
-  // 한국인이 익숙한 발음을 담은 특수 사전
-  export const SpecialDictionary: Array<[string, string]> = [
-    // ["とうきょう", "도쿄"], // 이거랑 
-    ["こんにちは", "곤니치와"], // 이거랑 
-    ["こんばんは", "곰방와"], // 이거는 문법으로 대응 가능할듯.
-    ["すみません", "스미마셍"],
-    ["はひふへほ", "하히후헤호"],
-    ["かわいい", "카와이"],
-    ["つなみ", "쓰나미"],
-    ["ゆうり", "유우리"],
-    ["ミュージック", "뮤지쿠"]
+// dictionary.ts
+// 한국인이 익숙한 발음을 담은 특수 사전
+export interface SpecialDictionaryEntry {
+  word: string;
+  answer: string;
+  hira?: boolean; // true면 히라가나 입력에도 적용
+  kata?: boolean; // true면 카타카나 입력에도 적용
+}
+
+export const SpecialDictionary: SpecialDictionaryEntry[] = [
+  // ["とうきょう", "도쿄"],
+  { word: "こんにちは", answer: "곤니치와", hira: true, kata: true },
+  { word: "こんばんは", answer: "곰방와" },
+  { word: "すみません", answer: "스미마셍" },
+  { word: "はひふへほ", answer: "하히후헤호" },
+  { word: "かわいい", answer: "카와이" },
+  { word: "つなみ", answer: "쓰나미" },
+  { word: "ゆうり", answer: "유우리" },
+  { word: "ミュージック", answer: "뮤지쿠"},
 ];
