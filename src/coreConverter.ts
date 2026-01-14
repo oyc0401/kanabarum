@@ -219,10 +219,6 @@ export function coreKanaToHangulConvert(
       }
 
       const next = readMoraAt(i + 1);
-      if (lastMora && lastMora.out === "지" && next && next.key === "く") {
-        i += 1;
-        continue;
-      }
 
       const prevV = lastMora?.vowelMain ?? "a";
       const nextInfo = next?.info;
