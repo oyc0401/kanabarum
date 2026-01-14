@@ -164,6 +164,9 @@ export function coreKanaToHangulConvert(s: string): string {
     ぷ: { out: "푸", vowelMain: "u", consClass: "p" },
     ぺ: { out: "페", vowelMain: "e", consClass: "p" },
     ぽ: { out: "포", vowelMain: "o", consClass: "p" },
+
+    // 이거는 う에 탁점 붙인 유니코드임.
+    ゔ: { out: "부", vowelMain: "u", consClass: "b" },
   };
 
   const YOUON: Record<string, MoraInfo> = {
@@ -178,7 +181,7 @@ export function coreKanaToHangulConvert(s: string): string {
     ちゃ: { out: "챠", vowelMain: "a", consClass: "t", wasYouon: true },
     ちゅ: { out: "츄", vowelMain: "u", consClass: "t", wasYouon: true },
     ちょ: { out: "쵸", vowelMain: "o", consClass: "t", wasYouon: true },
-
+    てゅ: { out: "튜", vowelMain: "u", consClass: "t", wasYouon: true },
     でゅ: { out: "듀", vowelMain: "u", consClass: "d", wasYouon: true },
 
     にゃ: { out: "냐", vowelMain: "a", consClass: "n", wasYouon: true },
@@ -188,6 +191,9 @@ export function coreKanaToHangulConvert(s: string): string {
     ひゃ: { out: "햐", vowelMain: "a", consClass: "h", wasYouon: true },
     ひゅ: { out: "휴", vowelMain: "u", consClass: "h", wasYouon: true },
     ひょ: { out: "효", vowelMain: "o", consClass: "h", wasYouon: true },
+    ふゃ: { out: "퍄", vowelMain: "a", consClass: "p", wasYouon: true },
+    ふゅ: { out: "퓨", vowelMain: "u", consClass: "p", wasYouon: true },
+    ふょ: { out: "표", vowelMain: "o", consClass: "p", wasYouon: true },
 
     みゃ: { out: "먀", vowelMain: "a", consClass: "m", wasYouon: true },
     みゅ: { out: "뮤", vowelMain: "u", consClass: "m", wasYouon: true },
@@ -217,10 +223,32 @@ export function coreKanaToHangulConvert(s: string): string {
   const LOAN: Record<string, MoraInfo> = {
     てぃ: { out: "티", vowelMain: "i", consClass: "t" },
     でぃ: { out: "디", vowelMain: "i", consClass: "d" },
+    ちぇ: { out: "체", vowelMain: "e", consClass: "t" },
+    しぇ: { out: "셰", vowelMain: "e", consClass: "s" },
+    じぇ: { out: "제", vowelMain: "e", consClass: "z" },
+    つぁ: { out: "차", vowelMain: "a", consClass: "t" },
+    つぃ: { out: "치", vowelMain: "i", consClass: "t" },
+    つぇ: { out: "체", vowelMain: "e", consClass: "t" },
+    つぉ: { out: "초", vowelMain: "o", consClass: "t" },
     ふぁ: { out: "파", vowelMain: "a", consClass: "p" },
     ふぃ: { out: "피", vowelMain: "i", consClass: "p" },
     ふぇ: { out: "페", vowelMain: "e", consClass: "p" },
     ふぉ: { out: "포", vowelMain: "o", consClass: "p" },
+    ぐぁ: { out: "과", vowelMain: "a", consClass: "g" },
+    ぐぃ: { out: "귀", vowelMain: "i", consClass: "g" },
+    ぐぇ: { out: "궤", vowelMain: "e", consClass: "g" },
+    ぐぉ: { out: "궈", vowelMain: "o", consClass: "g" },
+    くぁ: { out: "콰", vowelMain: "a", consClass: "k" },
+    くぃ: { out: "퀴", vowelMain: "i", consClass: "k" },
+    くぇ: { out: "퀘", vowelMain: "e", consClass: "k" },
+    くぉ: { out: "쿼", vowelMain: "o", consClass: "k" },
+    どぁ: { out: "돠", vowelMain: "a", consClass: "d" },
+    どぅ: { out: "두", vowelMain: "u", consClass: "d" },
+    どぉ: { out: "둬", vowelMain: "o", consClass: "d" },
+    ゔぁ: { out: "바", vowelMain: "a", consClass: "b" },
+    ゔぃ: { out: "비", vowelMain: "i", consClass: "b" },
+    ゔぇ: { out: "베", vowelMain: "e", consClass: "b" },
+    ゔぉ: { out: "보", vowelMain: "o", consClass: "b" },
   };
 
   const SMALL_Y = new Set(["ゃ", "ゅ", "ょ"]);

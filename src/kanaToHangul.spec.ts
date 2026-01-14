@@ -1465,3 +1465,35 @@ describe("ハロ / ハロー ending words", () => {
     );
   });
 });
+
+describe("loan special combos", () => {
+  it("handles non-standard digraphs", () => {
+    expect(converter("ちぇ")).toBe("체");
+    expect(converter("しぇ")).toBe("셰");
+    expect(converter("じぇ")).toBe("제");
+    expect(converter("つぁ")).toBe("차");
+    expect(converter("つぃ")).toBe("치");
+    expect(converter("つぇ")).toBe("체");
+    expect(converter("つぉ")).toBe("초");
+    expect(converter("ぐぁ")).toBe("과");
+    expect(converter("ぐぃ")).toBe("귀");
+    expect(converter("ぐぇ")).toBe("궤");
+    expect(converter("ぐぉ")).toBe("궈");
+    expect(converter("くぁ")).toBe("콰");
+    expect(converter("くぃ")).toBe("퀴");
+    expect(converter("くぇ")).toBe("퀘");
+    expect(converter("くぉ")).toBe("쿼");
+    expect(converter("ふゃ")).toBe("퍄");
+    expect(converter("ふゅ")).toBe("퓨");
+    expect(converter("ふょ")).toBe("표");
+    expect(converter("てゅ")).toBe("튜");
+    expect(converter("でゅ")).toBe("듀");
+    expect(converter("どぁ")).toBe("돠");
+    expect(converter("どぅ")).toBe("두");
+    expect(converter("どぉ")).toBe("둬");
+    expect(converter("ゔぁ")).toBe("바");
+    expect(converter("ゔぃ")).toBe("비");
+    expect(converter("ゔぇ")).toBe("베");
+    expect(converter("ゔぉ")).toBe("보");
+  });
+});
