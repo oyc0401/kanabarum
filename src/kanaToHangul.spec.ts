@@ -2,9 +2,9 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   KanaBarum,
-  kanaToHangul
+  kanaToHangul,
   type KanaToHangul,
-} from "./kanaToHangul";
+} from "./kanaBarum";
 
 let converter: KanaToHangul;
 

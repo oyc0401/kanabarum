@@ -1,9 +1,6 @@
 // lib/kanaToHangul.ts
-import kuromoji from "kuromoji";
-import path from "path";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import type kuromoji from "kuromoji";
+import type { Tokenizer } from "./tokenizer";
 
 /**
  * 1) normalize(NFC) + halfwidth-katakana NFKC + dash variants normalize
@@ -17,61 +14,11 @@ const require = createRequire(import.meta.url);
  *    - 「...」はい。 => はい의 'は'는 助詞 아님(대개 感動詞/名詞/動詞 등)이라 그대로 하
  */
 
-type Tokenizer = kuromoji.Tokenizer<kuromoji.IpadicFeatures>;
-
-async function buildTokenizer(): Promise<Tokenizer> {
-  return new Promise((resolve, reject) => {
-    // dicPath를 "node_modules/..."로 박아두면 pnpm/모노레포/번들러에서 깨질 수 있어 resolve 기반 권장
-    const dicPath = path.join(require.resolve("kuromoji"), "..", "..", "dict");
-
-    kuromoji.builder({ dicPath }).build((err, tk) => {
-      if (err || !tk) reject(err);
-      else resolve(tk);
-    });
-  });
-}
-
-// ⚠️ 라이브러리 내부 top-level await는 환경에 따라 골치아픔.
-//    앱/테스트에서 1회만 build 후 주입하는 방식을 권장.
-let _tokenizer: Tokenizer | null = null;
-async function getTokenizer(): Promise<Tokenizer> {
-  if (_tokenizer) return _tokenizer;
-  _tokenizer = await buildTokenizer();
-  return _tokenizer;
-}
-
-// --------------------
-// Public APIs
-// --------------------
-
 export type KanaToHangul = (input: string) => string;
 
-let _kanaToHangulInstance: KanaToHangul | null = null;
-let _kanaToHangulInitPromise: Promise<KanaToHangul> | null = null;
-
-async function initKanaToHangul(): Promise<KanaToHangul> {
-  if (_kanaToHangulInstance) return _kanaToHangulInstance;
-  if (_kanaToHangulInitPromise) return _kanaToHangulInitPromise;
-
-  _kanaToHangulInitPromise = (async () => {
-    const tk = await getTokenizer();
-    const convert: KanaToHangul = (input: string) =>
-      kanaToHangulWithTokenizer(input, tk);
-    _kanaToHangulInstance = convert;
-    return convert;
-  })();
-
-  return _kanaToHangulInitPromise;
+export function createKanaToHangul(tokenizer: Tokenizer): KanaToHangul {
+  return (input: string) => kanaToHangulWithTokenizer(input, tokenizer);
 }
-
-export async function kanaToHangul(input: string): Promise<string> {
-  const converter = await initKanaToHangul();
-  return converter(input);
-}
-
-export const KanaBarum = Object.freeze({
-  init: initKanaToHangul,
-});
 
 function kanaToHangulWithTokenizer(
   input: string,

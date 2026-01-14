@@ -1,5 +1,6 @@
 export {
   KanaBarum as KanaToHangulMaker,
+  KanaBarum,
   kanaToHangul,
-  type KanaToHangul,
-} from "./kanaToHangul";
+} from "./kanaBarum";
+export type { KanaToHangul } from "./kanaBarum";
