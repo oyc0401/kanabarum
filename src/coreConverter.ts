@@ -10,14 +10,6 @@ export function coreKanaToHangulConvert(
   // 코드포인트 배열로 변환 (surrogate pair 문제 해결)
   const chars = Array.from(s);
 
-  // 코드포인트 인덱스 → UTF-16 인덱스 매핑 (토큰 span은 UTF-16 기준)
-  const cpToU16: number[] = [];
-  let u16Offset = 0;
-  for (let j = 0; j < chars.length; j++) {
-    cpToU16[j] = u16Offset;
-    u16Offset += chars[j].length; // surrogate pair면 2, 아니면 1
-  }
-
   // --- Hangul utilities ---
   const HANGUL_BASE = 0xac00;
   const HANGUL_END = 0xd7a3;
@@ -130,19 +122,18 @@ export function coreKanaToHangulConvert(
     return m?.key ?? null;
   }
 
-  // ✅ "-san" 판별(당신 코드 그대로 유지)
+  // ✅ "-san" 판별 (코드포인트 인덱스 기준)
   const SAN_PARTICLES = new Set(["は", "わ", "へ", "え", "を", "お"]);
-  // cpIdx: 코드포인트 인덱스, u16Idx: UTF-16 인덱스
-  function isSanHonorificAt(cpIdx: number, u16Idx: number): boolean {
-    const t = curToken(u16Idx);
+  function isSanHonorificAt(cpIdx: number): boolean {
+    const t = curToken(cpIdx);
     if (!t) return false;
     if (cpIdx < 1 || chars[cpIdx - 1] !== "さ") return false;
 
-    // t.start는 UTF-16 인덱스, s.slice 사용
-    const local = s.slice(t.start, u16Idx + 1);
+    // t.start는 코드포인트 인덱스, chars.slice 사용
+    const local = chars.slice(t.start, cpIdx + 1).join("");
     if (!local.endsWith("さん")) return false;
 
-    const hasPrefixInsideToken = (u16Idx - 1) > t.start;
+    const hasPrefixInsideToken = (cpIdx - 1) > t.start;
     const p = prevToken();
     const prevIsAttachable =
       !!p && p.end === t.start && p.surface.length > 0 && !HARD_BOUNDARY_SURF.has(p.surface);
@@ -166,12 +157,11 @@ export function coreKanaToHangulConvert(
     // 토큰 기반 "단어 시작" 정의: i가 content 토큰 start면 true
      let atTokenStart = false;
     let tokForI: TokenSpan | null = null;
-    const u16Idx = cpToU16[i]; // 현재 코드포인트 인덱스의 UTF-16 위치
 
     if (tokens) {
-      tokForI = curToken(u16Idx);
+      tokForI = curToken(i);
       // ✅ 토큰 시작이면 일단 단어 시작 후보로 인정
-      atTokenStart = !!tokForI && tokForI.start === u16Idx;
+      atTokenStart = !!tokForI && tokForI.start === i;
 
       // ✅ 유성화/단어시작 판정에서 "기호"와 "원문 카타카나 토큰"만 컷
       if (tokForI?.pos === "記号") atTokenStart = false;
@@ -297,7 +287,7 @@ export function coreKanaToHangulConvert(
       }
 
       // ✅ 토큰 컨텍스트 기반 "-san" → '상'
-      if (lastMora?.out === "사" && isSanHonorificAt(i, u16Idx)) {
+      if (lastMora?.out === "사" && isSanHonorificAt(i)) {
         out = replaceLastHangul(out, JONG.NG);
         i += 1;
         continue;

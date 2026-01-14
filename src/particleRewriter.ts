@@ -122,6 +122,10 @@ export function rewriteParticlesFromTokenization(
   hiraganaText: string,
   tokenizerTokens: kuromoji.IpadicFeatures[],
 ): { rewritten: string; spans: TokenSpan[] } {
+  // 코드포인트 배열로 변환 (kuromoji word_position이 코드포인트 기준)
+  const hiraChars = Array.from(hiraganaText);
+  const originChars = Array.from(originalText);
+
   const protectedRanges = buildProtectedRanges(
     hiraganaText,
     SpecialDictionary.map(([k]) => k),
@@ -136,30 +140,28 @@ export function rewriteParticlesFromTokenization(
     const tok = tokenizerTokens[i];
     const wp = (tok as any).word_position as number | undefined;
     const surf = tok.surface_form;
+    const surfCpLen = [...surf].length; // 코드포인트 길이
 
+    // kuromoji word_position은 코드포인트 기준 (1-based)
     const start = typeof wp === "number" ? wp - 1 : cursorInText;
-    const end = start + surf.length;
+    const end = start + surfCpLen;
     cursorInText = end;
 
-    // 토큰 사이 갭(혹시나)을 보존 + span도 채움(coverage 확보)
-    if (start > cursorInText - surf.length) {
-      // 이 케이스는 거의 안 나지만 안전장치로 둡니다.
-    }
-    // cursor tracking이 이미 end로 갔기 때문에, 갭은 별도로 계산
-    // (kuromoji는 보통 연속이라 갭 없음)
-
-    const hiraSurf = hiraganaText.slice(start, end);
-    const originSurf = originalText.slice(start, end);
+    const hiraSurf = hiraChars.slice(start, end).join("");
+    const originSurf = originChars.slice(start, end).join("");
 
     const originHadKatakana = /[\u30A0-\u30FF]/.test(originSurf);
 
-    // 보호 구간이면 리라이트 금지
-    if (isProtectedSpan(protectedRanges, start, end)) {
-      const outStart = out.length;
+    // 보호 구간이면 리라이트 금지 (UTF-16 기준 protectedRanges를 코드포인트로 변환 필요)
+    // buildProtectedRanges는 UTF-16 기준이므로, 별도 변환 필요
+    // 여기서는 hiraSurf 기준으로 직접 체크
+    const isProtected = SpecialDictionary.some(([k]) => hiraSurf.includes(k) || k.includes(hiraSurf));
+    if (isProtected && isProtectedSpan(protectedRanges, start, end)) {
+      const outCpStart = [...out].length;
       out += hiraSurf;
       spans.push({
-        start: outStart,
-        end: out.length,
+        start: outCpStart,
+        end: [...out].length,
         surface: hiraSurf,
         pos: tok.pos,
         pos1: tok.pos_detail_1 ?? undefined,
@@ -186,10 +188,10 @@ export function rewriteParticlesFromTokenization(
           const isEndOrPunct = nextBoundaryOrEnd(tokenizerTokens, i);
 
           const prevTok = tokenizerTokens[prevIdx];
-          const prevHira = hiraganaText.slice(
-            (((prevTok as any).word_position as number | undefined) ?? 1) - 1,
-            ((((prevTok as any).word_position as number | undefined) ?? 1) - 1) + prevTok.surface_form.length,
-          );
+          const prevWpHa = (prevTok as any).word_position as number | undefined;
+          const prevStartHa = typeof prevWpHa === "number" ? prevWpHa - 1 : 0;
+          const prevEndHa = prevStartHa + [...prevTok.surface_form].length;
+          const prevHira = hiraChars.slice(prevStartHa, prevEndHa).join("");
 
           if (
             !prevHira.includes("っ") &&
@@ -205,9 +207,9 @@ export function rewriteParticlesFromTokenization(
 
     // --- へ -> え (격조사) ---
     if (tok.pos === "助詞" && hiraSurf === "へ") {
-      // 바로 왼쪽이 공백이면 keep
+      // 바로 왼쪽이 공백이면 keep (코드포인트 배열 사용)
       if (start > 0) {
-        const left = hiraganaText[start - 1];
+        const left = hiraChars[start - 1];
         if (left === " " || left === "　" || left === "\t" || left === "\n" || left === "\r") {
           // keep
         } else {
@@ -216,9 +218,9 @@ export function rewriteParticlesFromTokenization(
             const prevTok = tokenizerTokens[prevIdx];
             const prevWp = (prevTok as any).word_position as number | undefined;
             const prevStart = typeof prevWp === "number" ? prevWp - 1 : 0;
-            const prevEnd = prevStart + prevTok.surface_form.length;
+            const prevEnd = prevStart + [...prevTok.surface_form].length;
 
-            const prevHiraSurf = hiraganaText.slice(prevStart, prevEnd);
+            const prevHiraSurf = hiraChars.slice(prevStart, prevEnd).join("");
 
             if (LEXICAL_HE_ENDINGS.some((w) => (prevHiraSurf + "へ").endsWith(w))) {
               // keep lexical endings
@@ -232,12 +234,12 @@ export function rewriteParticlesFromTokenization(
       }
     }
 
-    const outStart = out.length;
+    const outCpStart = [...out].length;
     out += replaced;
 
     spans.push({
-      start: outStart,
-      end: out.length,
+      start: outCpStart,
+      end: [...out].length,
       surface: replaced,
       pos: tok.pos,
       pos1: tok.pos_detail_1 ?? undefined,
