@@ -35,7 +35,7 @@ converter("ありがとう"); // => "아리가토"
 
 - `kanaToHangul(input: string): Promise<string>`  
   첫 호출 시 자동으로 tokenizer를 초기화하고 이후에는 같은 인스턴스를 재사용합니다.
-- `KanaToHangulMaker.init(): Promise<KanaToHangul>`  
+- `KanaBarum.init(): Promise<KanaToHangul>` (`KanaToHangulMaker` alias 제공)  
   SSR 환경 등에서 초기화 시점을 직접 제어하고 싶을 때 사용합니다.
 
 ## 테스트

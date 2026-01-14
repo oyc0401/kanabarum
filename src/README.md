@@ -56,7 +56,10 @@ pnpm publish --access public
 - `tsconfig.json`: 개발용 기본 설정(emit 없음, IDE 타입 체크용, Vitest 타입 포함)
 - `tsup.config.ts`: 번들 설정(엔트리/타겟/dts/treeshake 등)
 - `src/kanaBarum.ts`: 초기화/싱글턴/비동기 API 담당
-- `src/kanaToHangul.ts`: 실제 변환 로직과 lazy/sync API
+- `src/kanaToHangul.ts`: 파이프라인 orchestrator (정규화→조사→코어 변환 호출)
+- `src/normalizer.ts`: 입력 정규화/히라가나 변환
+- `src/particleRewriter.ts`: kuromoji 기반 조사 치환 로직
+- `src/coreConverter.ts`: 모라 단위 한글 변환 핵심 로직
 - `src/tokenizer.ts`: kuromoji 의존성 초기화 및 재사용 로직
 - `src/index.ts`: 패키지 진입점, 공개 API를 재-export
 - `src/kanaToHangul.spec.ts`: 변환 로직 검증용 테스트 (배포 대상 아님)

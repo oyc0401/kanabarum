@@ -2,21 +2,26 @@ import type { KanaToHangul } from "./kanaToHangul";
 import { createKanaToHangul } from "./kanaToHangul";
 import { getTokenizer } from "./tokenizer";
 
-let instance: KanaToHangul | null = null;
-let initPromise: Promise<KanaToHangul> | null = null;
+/**
+ * Lazy-initialized public API wrapper.
+ * 토크나이저를 빌드/캐시하고, 외부에서는 await kanaToHangul(...)만 호출하면 됩니다.
+ */
+
+let cachedConverter: KanaToHangul | null = null;
+let pendingInit: Promise<KanaToHangul> | null = null;
 
 async function initKanaToHangul(): Promise<KanaToHangul> {
-  if (instance) return instance;
-  if (initPromise) return initPromise;
+  if (cachedConverter) return cachedConverter;
+  if (pendingInit) return pendingInit;
 
-  initPromise = (async () => {
+  pendingInit = (async () => {
     const tokenizer = await getTokenizer();
     const converter = createKanaToHangul(tokenizer);
-    instance = converter;
+    cachedConverter = converter;
     return converter;
   })();
 
-  return initPromise;
+  return pendingInit;
 }
 
 export async function kanaToHangul(input: string): Promise<string> {
