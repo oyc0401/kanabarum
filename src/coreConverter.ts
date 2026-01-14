@@ -7,6 +7,7 @@ export function coreKanaToHangulConvert(s: string): string {
     ["こんにちは", "콘니치와"],
     ["こんばんは", "콤방와"],
     ["すみません", "스미마셍"],
+    ["はひふへほ", "하히후헤호"]
   ];
 
   // --- Hangul utilities ---

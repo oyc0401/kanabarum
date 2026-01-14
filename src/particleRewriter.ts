@@ -89,16 +89,10 @@ export function rewriteParticlesWithKuromoji(
         } else if (prevSurf.endsWith("の")) {
           // "...のへ" pattern
         } else if (token.pos_detail_1 === "格助詞") {
-          const nextPos = hasNextContent ? tokens[nextIdx].pos : "";
-          const looksDirectionalByVerb =
-            nextPos === "動詞" || nextPos === "助動詞";
-
-          const nextSurf = hasNextContent ? tokens[nextIdx].surface_form : "";
-          const nextIsSingleKana = hasNextContent && isSingleKana(nextSurf);
-
-          if (!nextIsSingleKana && (looksDirectionalByVerb || isEndOrPunct)) {
-            replaced = "え";
-          }
+          // If kuromoji identifies 'へ' as a case particle, it's overwhelmingly
+          // for direction and should be pronounced 'え'. The existing lexical
+          // checks handle the rare exceptions.
+          replaced = "え";
         }
       }
     }
