@@ -179,6 +179,8 @@ export function coreKanaToHangulConvert(s: string): string {
     ちゅ: { out: "츄", vowelMain: "u", consClass: "t", wasYouon: true },
     ちょ: { out: "쵸", vowelMain: "o", consClass: "t", wasYouon: true },
 
+    でゅ: { out: "듀", vowelMain: "u", consClass: "d", wasYouon: true },
+
     にゃ: { out: "냐", vowelMain: "a", consClass: "n", wasYouon: true },
     にゅ: { out: "뉴", vowelMain: "u", consClass: "n", wasYouon: true },
     にょ: { out: "뇨", vowelMain: "o", consClass: "n", wasYouon: true },
@@ -287,8 +289,6 @@ export function coreKanaToHangulConvert(s: string): string {
         // SPECIAL 값도 "가나" 형태로 들어와야 테이블이 자연스럽게 이어짐.
         // 여기서는 그대로 한글로 박는 기존 정책 유지.
         out += v
-          .replaceAll("こんばんわ", "콤방와")
-          .replaceAll("こんにちわ", "콘니치와");
         i += k.length;
         lastMora = null;
         matchedSpecial = true;
@@ -500,6 +500,10 @@ export function coreKanaToHangulConvert(s: string): string {
           i += mora.len + 1;
           continue;
         }
+      } else if (mora.key === "し") {
+        // しい adjectives pronounce as '시'
+        i += mora.len + 1;
+        continue;
       }
     }
 

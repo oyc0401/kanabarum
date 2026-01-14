@@ -25,7 +25,7 @@ describe("kanaToHangul", () => {
     expect(converter("ありがとう")).toBe("아리가토"); // とう -> と
     expect(converter("おはよう")).toBe("오하요"); // よう -> よ
     expect(converter("こんばんは")).toBe("콤방와"); 
-    expect(converter("すみません")).toBe("스미마센"); 
+    expect(converter("すみません")).toBe("스미마셍"); 
   });
 
   it("youon (きゃ/しゅ/ちょ)", () => {
@@ -137,7 +137,8 @@ describe("kanaToHangul", () => {
     expect(converter("こい")).toBe("코이"); // 단순 こ + い
     expect(converter("あい")).toBe("아이");
     expect(converter("うい")).toBe("우이");
-    expect(converter("おいしい")).toBe("오이시이"); // しい는 요음 아님
+    expect(converter("おいしい")).toBe("오이시"); // しい는 요음이 아니라 장음 제거
+    expect(converter("おいしいです")).toBe("오이시데스");
     expect(converter("おいで")).toBe("오이데");
   });
 
@@ -387,7 +388,7 @@ describe("kanaToHangul2", () => {
     expect(converter("こい")).toBe("코이");
     expect(converter("あい")).toBe("아이");
     expect(converter("うい")).toBe("우이");
-    expect(converter("おいしい")).toBe("오이시이");
+    expect(converter("おいしい")).toBe("오이시");
     expect(converter("おいで")).toBe("오이데");
   });
 
@@ -864,6 +865,118 @@ describe("kanaToHangul - loanword hard cases", () => {
     expect(converter("フォー")).toBe("포"); // ー drop
   });
 });
+
+describe("kanaToHangul - README samples", () => {
+  it("greetings", () => {
+    expect(converter("おはよう")).toBe("오하요");
+    expect(converter("こんにちは")).toBe("콘니치와");
+    expect(converter("こんばんは")).toBe("콤방와");
+    expect(converter("ありがとう")).toBe("아리가토");
+    expect(converter("すみません")).toBe("스미마셍");
+  });
+
+  it("youon showcase", () => {
+    expect(converter("きゃく")).toBe("캬쿠");
+    expect(converter("しゅくだい")).toBe("슈쿠다이");
+    expect(converter("ちょっと")).toBe("춋토");
+    expect(converter("きゅう")).toBe("큐");
+    expect(converter("りょこう")).toBe("료코");
+  });
+
+  it("sokuon showcase", () => {
+    expect(converter("きって")).toBe("킷테");
+    expect(converter("がっこう")).toBe("각코");
+    expect(converter("けっこん")).toBe("켓콘");
+    expect(converter("ざっし")).toBe("잣시");
+    expect(converter("やっちゃった")).toBe("얏챳타");
+  });
+
+  it("ん rules", () => {
+    expect(converter("にゃんこ")).toBe("냥코");
+    expect(converter("さんぽ")).toBe("삼포");
+    expect(converter("しんぶん")).toBe("심분");
+    expect(converter("りんご")).toBe("링고");
+    expect(converter("まんいち")).toBe("만이치");
+  });
+
+  it("wa particle replacements", () => {
+    expect(converter("わたしはがくせいです")).toBe("와타시와가쿠세데스");
+    expect(converter("これはペンです")).toBe("코레와펜데스");
+    expect(converter("きょうはあつい")).toBe("쿄와아츠이");
+    expect(converter("おねえさんはやさしいです")).toBe("오네상와야사시데스");
+    expect(converter("すしはおいしい")).toBe("스시와오이시");
+  });
+
+  it("e particle replacements", () => {
+    expect(converter("がっこうへいく")).toBe("각코에이쿠");
+    expect(converter("うちへかえる")).toBe("우치에카에루");
+    expect(converter("みぎへまがって")).toBe("미기에마갓테");
+  });
+
+  it("long vowel contractions", () => {
+    expect(converter("さようなら")).toBe("사요나라");
+    expect(converter("せんせい")).toBe("센세");
+    expect(converter("おおさか")).toBe("오사카");
+    expect(converter("けいさつ")).toBe("케사츠");
+    expect(converter("えいご")).toBe("에고");
+  });
+
+  it("loanword combos", () => {
+    expect(converter("パーティー")).toBe("파티");
+    expect(converter("ティッシュ")).toBe("팃슈");
+    expect(converter("フォーク")).toBe("포쿠");
+    expect(converter("フィギュア")).toBe("피규아");
+    expect(converter("デュエル")).toBe("듀에루");
+  });
+
+  it("katakana to hangul", () => {
+    expect(converter("カタカナ")).toBe("카타카나");
+    expect(converter("コーヒー")).toBe("코히");
+    expect(converter("サッカー")).toBe("삭카");
+    expect(converter("アイドル")).toBe("아이도루");
+    expect(converter("スペシャル")).toBe("스페샤루");
+  });
+
+  it("kanji + furigana mixes", () => {
+    expect(converter("誕生日(たんじょうび)")).toBe("誕生日(탄죠비)");
+    expect(converter("第3回(だいさんかい)")).toBe("第3回(다이상카이)");
+    expect(converter("京都(きょうと)")).toBe("京都(쿄토)");
+    expect(converter("東京駅(とうきょうえき)")).toBe("東京駅(도쿄에키)");
+    expect(converter("日本語(にほんご)")).toBe("日本語(니홍고)");
+  });
+
+  it("punctuation and spacing preservation", () => {
+    expect(converter("コーヒー, ください。")).toBe("코히, 쿠다사이。");
+    expect(converter("「きょう」")).toBe("「쿄」");
+    expect(converter("（がっこう）")).toBe("（각코）");
+    expect(converter("!? (びっくり)")).toBe("!? (빗쿠리)");
+    expect(converter("  すし  ")).toBe("  스시  ");
+  });
+
+  it("halfwidth / fullwidth normalization", () => {
+    expect(converter("ﾊﾝｸﾞﾙ")).toBe("항구루");
+    expect(converter("ｶﾀｶﾅ")).toBe("카타카나");
+    expect(converter("ﾄ-ｷｮ-")).toBe("토쿄");
+    expect(converter("ﾊﾟ-ﾃｨｰ")).toBe("파티");
+    expect(converter("ﾐﾅｻﾝ")).toBe("미나상");
+  });
+
+  it("NFC/NFD devoicing examples", () => {
+    expect(converter("がくせい")).toBe("가쿠세");
+    expect(converter("ぱーてぃー")).toBe("파티");
+    expect(converter("べんごし")).toBe("벵고시");
+    expect(converter("じゅん")).toBe("즁");
+    expect(converter("ぷろげーまー")).toBe("푸로게마");
+  });
+
+  it("hiragana long vowel marks", () => {
+    expect(converter("おねーさん")).toBe("오네상");
+    expect(converter("みゅーじっく")).toBe("뮤지쿠");
+    expect(converter("じょーず")).toBe("죠즈");
+    expect(converter("ちょーっと")).toBe("춋토");
+    expect(converter("へーき")).toBe("헤키");
+  });
+});
 describe("kanaToHangul - more edge cases", () => {
   // --------------------
   // Unicode normalization (NFD/NFC) + punctuation preservation
@@ -896,6 +1009,7 @@ describe("kanaToHangul - more edge cases", () => {
     // ン + ケ(k) => ㅇ => 팡..., ー drop
     expect(converter("ﾊﾟﾝｹｰｷ")).toBe("팡케키");
     expect(converter("パンケーキ")).toBe("팡케키");
+    expect(converter("ﾄ-ｷｮ-")).toBe("토쿄");
   });
 
   // --------------------
@@ -1170,7 +1284,7 @@ describe("kanaToHangul - particles stress (は/へ/を)", () => {
 
     it("particle は next to small/long-vowel patterns", () => {
       expect(converter("きょうはいい")).toBe("쿄와이이");
-      expect(converter("おねえさんはやさしい")).toBe("오네상와야사시이"); // ねえ drop + は->わ
+      expect(converter("おねえさんはやさしい")).toBe("오네상와야사시"); // ねえ drop + は->わ
     });
   });
 
@@ -1321,7 +1435,7 @@ describe("numbers & '-san' edge cases", () => {
   });
 
   it("mix: -san + particle は", () => {
-    expect(converter("おじさんはやさしい")).toBe("오지상와야사시이");
+    expect(converter("おじさんはやさしい")).toBe("오지상와야사시");
     expect(converter("おかあさんはげんき")).toBe("오카아상와겡키");
   });
 });

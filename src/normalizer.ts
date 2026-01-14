@@ -8,7 +8,14 @@ export function normalizeInputText(input: string): string {
   // 3) 장음 기호 변종 최소 치환
   // - U+2015 HORIZONTAL BAR
   // - U+2500 BOX DRAWINGS LIGHT HORIZONTAL
-  return normalized.replace(/[\u2015\u2500]/g, "ー");
+  normalized = normalized.replace(/[\u2015\u2500]/g, "ー");
+
+  // 4) ASCII hyphen이 가타카나 사이에 있을 때 장음 처리
+  normalized = normalized
+    .replace(/(?<=([\u30A0-\u30FF]))-/g, "ー")
+    .replace(/-(?=[\u30A0-\u30FF])/g, "ー");
+
+  return normalized;
 }
 
 function normalizeHalfwidthKatakanaOnly(s: string): string {
