@@ -3,7 +3,6 @@ import type kuromoji from "kuromoji";
 import type { Tokenizer } from "./tokenizer";
 import { SpecialDictionary, SpecialDictionaryEntry } from "./dictionary";
 
-
 // --------------------------
 // local helper: toHiragana (protectedRanges는 hiraganaText 기준)
 // --------------------------
@@ -118,7 +117,10 @@ function nextContentIdx(tokens: kuromoji.IpadicFeatures[], i: number): number {
     if (isContentToken(tokens[j])) return j;
   return -1;
 }
-function nextBoundaryOrEnd(tokens: kuromoji.IpadicFeatures[], i: number): boolean {
+function nextBoundaryOrEnd(
+  tokens: kuromoji.IpadicFeatures[],
+  i: number,
+): boolean {
   for (let j = i + 1; j < tokens.length; j += 1) {
     if (isHardBoundaryToken(tokens[j])) continue;
     return false;
@@ -208,7 +210,10 @@ export function rewriteParticlesFromTokenization(
     if (tok.pos === "助詞" && hiraSurf === "は") {
       if (i > 0 && tokenizerTokens[i - 1].surface_form === "は") {
         // keep
-      } else if (i + 1 < tokenizerTokens.length && tokenizerTokens[i + 1].surface_form === "は") {
+      } else if (
+        i + 1 < tokenizerTokens.length &&
+        tokenizerTokens[i + 1].surface_form === "は"
+      ) {
         // keep
       } else {
         const prevIdx = prevContentIdx(tokenizerTokens, i);
@@ -240,7 +245,13 @@ export function rewriteParticlesFromTokenization(
       // 바로 왼쪽이 공백이면 keep (코드포인트 배열 사용)
       if (start > 0) {
         const left = hiraChars[start - 1];
-        if (left === " " || left === "　" || left === "\t" || left === "\n" || left === "\r") {
+        if (
+          left === " " ||
+          left === "　" ||
+          left === "\t" ||
+          left === "\n" ||
+          left === "\r"
+        ) {
           // keep
         } else {
           const prevIdx = prevContentIdx(tokenizerTokens, i);
@@ -252,7 +263,9 @@ export function rewriteParticlesFromTokenization(
 
             const prevHiraSurf = hiraChars.slice(prevStart, prevEnd).join("");
 
-            if (LEXICAL_HE_ENDINGS.some((w) => (prevHiraSurf + "へ").endsWith(w))) {
+            if (
+              LEXICAL_HE_ENDINGS.some((w) => (prevHiraSurf + "へ").endsWith(w))
+            ) {
               // keep lexical endings
             } else if (prevHiraSurf.endsWith("の")) {
               // keep "...のへ"
@@ -291,7 +304,11 @@ export function tokenizeAndRewriteParticles(
   originalText: string,
   hiraganaText: string,
   tokenizer: Tokenizer,
-): { rewritten: string; spans: TokenSpan[]; rawTokens: kuromoji.IpadicFeatures[] } {
+): {
+  rewritten: string;
+  spans: TokenSpan[];
+  rawTokens: kuromoji.IpadicFeatures[];
+} {
   const rawTokens = tokenizer.tokenize(originalText);
   //  console.log(rawTokens)
   const { rewritten, spans } = rewriteParticlesFromTokenization(

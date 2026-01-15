@@ -10,8 +10,6 @@ async function buildTokenizer(): Promise<Tokenizer> {
   return new Promise((resolve, reject) => {
     const dicPath = path.join(require.resolve("kuromoji"), "..", "..", "dict");
 
- 
-
     kuromoji.builder({ dicPath }).build((err, tk) => {
       if (err || !tk) reject(err);
       else resolve(tk);

@@ -1,10 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import {
-  KanaBarum,
-  kanaToHangul,
-  type KanaToHangul,
-} from "./kanaBarum";
+import { KanaBarum, kanaToHangul, type KanaToHangul } from "./kanaBarum";
 
 let converter: KanaToHangul;
 
@@ -291,7 +287,9 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
     it("-san + 조사/문장 결합에서도 안정적이다", () => {
       expect(converter("おじさんはやさしい")).toBe("오지상와야사시");
       expect(converter("おかあさんはげんき")).toBe("오카아상와겡키");
-      expect(converter("ハローさんはあいさつです")).toBe("하로상와아이사츠데스");
+      expect(converter("ハローさんはあいさつです")).toBe(
+        "하로상와아이사츠데스",
+      );
     });
   });
 
@@ -561,31 +559,31 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
   });
 });
 
-
-describe ("실제 일본어 문장 예시",() => {
-
-      it("표준 히라가나 문장(구두점 포함)", () => {
-      expect(
-        converter(
-          "はじめまして。わたしはにほんごをべんきょうしています。どうぞよろしくおねがいします。",
-        ),
-      ).toBe("하지메마시테。와타시와니홍고오벵쿄시테이마스。도조요로시쿠오네가이시마스。");
-      expect(converter("きょうはとてもいいてんきですね。")).toBe(
-        "쿄와토테모이이텡키데스네。",
-      );
-      expect(
-        converter(
-          "きょうはとてもいいてんきですね。そとへさんぽにいきましょうか。おいしいコーヒーをのみたいです。",
-        ),
-      ).toBe(
-        "쿄와토테모이이텡키데스네。소토에삼포니이키마쇼카。오이시코히오노미타이데스。",
-      );
-      expect(
-        converter(
-          "わたしはきのう、ともだちといっしょにえいがをみました。とてもおもしろかったです。またいきたいです。",
-        ),
-      ).toBe(
-        "와타시와키노、도모다치토잇쇼니에가오미마시타。토테모오모시로캇타데스。마타이키타이데스。",
-      );
-    });
-})
+describe("실제 일본어 문장 예시", () => {
+  it("표준 히라가나 문장(구두점 포함)", () => {
+    expect(
+      converter(
+        "はじめまして。わたしはにほんごをべんきょうしています。どうぞよろしくおねがいします。",
+      ),
+    ).toBe(
+      "하지메마시테。와타시와니홍고오벵쿄시테이마스。도조요로시쿠오네가이시마스。",
+    );
+    expect(converter("きょうはとてもいいてんきですね。")).toBe(
+      "쿄와토테모이이텡키데스네。",
+    );
+    expect(
+      converter(
+        "きょうはとてもいいてんきですね。そとへさんぽにいきましょうか。おいしいコーヒーをのみたいです。",
+      ),
+    ).toBe(
+      "쿄와토테모이이텡키데스네。소토에삼포니이키마쇼카。오이시코히오노미타이데스。",
+    );
+    expect(
+      converter(
+        "わたしはきのう、ともだちといっしょにえいがをみました。とてもおもしろかったです。またいきたいです。",
+      ),
+    ).toBe(
+      "와타시와키노、도모다치토잇쇼니에가오미마시타。토테모오모시로캇타데스。마타이키타이데스。",
+    );
+  });
+});

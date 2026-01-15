@@ -7,15 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": [
-      "**",
-      "!node_modules",
-      "!.next",
-      "!dist",
-      "!build",
-      "!frontend/src/api/model",
-      "!api-json.json"
-    ]
+    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
   },
   "formatter": {
     "enabled": true,
@@ -32,8 +24,7 @@
   },
   "css": {
     "parser": {
-      "cssModules": false,
-      "tailwindDirectives": true
+      "cssModules": false
     }
   },
   "linter": {
@@ -41,47 +32,7 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noUnknownAtRules": "off",
         "noExplicitAny": "off"
-      }
-    },
-    "domains": {
-      "next": "recommended",
-      "react": "recommended"
-    }
-  },
-  "overrides": [
-    {
-      "includes": [
-        "backend/src/**/*.ts"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "useImportType": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["admin/**/*"],
-      "linter": {
-        "rules": {
-          "a11y": {
-            "useKeyWithClickEvents": "off",
-            "noSvgWithoutTitle": "off"
-          },
-          "correctness": {
-            "noUnsafeFinally": "off"
-          }
-        }
-      }
-    }
-  ],
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
       }
     }
   }

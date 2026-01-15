@@ -1,9 +1,18 @@
 // coreConverter.ts
 import { SpecialDictionary, SpecialDictionaryEntry } from "./dictionary";
 import { HARD_BOUNDARY_SURF, TokenSpan } from "./particleRewriter";
- import{ConsClass, MoraInfo, SINGLE,YOUON, LOAN, SMALL_Y, SMALL_V, U_DROP_KEYS} from "./mora"
+import {
+  ConsClass,
+  MoraInfo,
+  SINGLE,
+  YOUON,
+  LOAN,
+  SMALL_Y,
+  SMALL_V,
+  U_DROP_KEYS,
+} from "./mora";
 
- // --------------------------
+// --------------------------
 // Kana normalize helpers
 // --------------------------
 function isHiraganaChar(ch: string) {
@@ -16,27 +25,49 @@ function isKatakanaChar(ch: string) {
 }
 function toHiraganaKey(s: string): string {
   const n = s.normalize("NFKC");
-  return Array.from(n).map((ch) => (isKatakanaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! - 0x60) : ch)).join("");
+  return Array.from(n)
+    .map((ch) =>
+      isKatakanaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! - 0x60) : ch,
+    )
+    .join("");
 }
 function toKatakanaKey(s: string): string {
   const n = s.normalize("NFKC");
-  return Array.from(n).map((ch) => (isHiraganaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! + 0x60) : ch)).join("");
+  return Array.from(n)
+    .map((ch) =>
+      isHiraganaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! + 0x60) : ch,
+    )
+    .join("");
 }
 
 type DictStream = "orig" | "rewritten";
-type CompiledDictItem = { keyChars: string[]; answer: string; stream: DictStream };
+type CompiledDictItem = {
+  keyChars: string[];
+  answer: string;
+  stream: DictStream;
+};
 
-function compileSpecialDictionary(dict: SpecialDictionaryEntry[]): CompiledDictItem[] {
+function compileSpecialDictionary(
+  dict: SpecialDictionaryEntry[],
+): CompiledDictItem[] {
   const items: CompiledDictItem[] = [];
 
   for (const e of dict) {
     // 기본: exact word는 원본에서만
-    items.push({ keyChars: Array.from(e.word), answer: e.answer, stream: "orig" });
+    items.push({
+      keyChars: Array.from(e.word),
+      answer: e.answer,
+      stream: "orig",
+    });
 
     // hira:true => hiragana 스트림에서만 (입력 전체가 히라로 바뀌는 파이프라인이기 때문)
     if (e.hira) {
       const k = toHiraganaKey(e.word);
-      items.push({ keyChars: Array.from(k), answer: e.answer, stream: "rewritten" });
+      items.push({
+        keyChars: Array.from(k),
+        answer: e.answer,
+        stream: "rewritten",
+      });
     }
 
     // kata:true => 원본에서만
@@ -53,15 +84,14 @@ function compileSpecialDictionary(dict: SpecialDictionaryEntry[]): CompiledDictI
 
 const COMPILED_SPECIAL_DICT = compileSpecialDictionary(SpecialDictionary);
 
-
 function isHiragana(ch: string): boolean {
-    const c = ch.codePointAt(0)!;
-    return c >= 0x3040 && c <= 0x309f;
-  }
+  const c = ch.codePointAt(0)!;
+  return c >= 0x3040 && c <= 0x309f;
+}
 
-  function isKana(ch: string): boolean {
-    return isHiragana(ch) || ch === "ー";
-  }
+function isKana(ch: string): boolean {
+  return isHiragana(ch) || ch === "ー";
+}
 
 export function coreKanaToHangulConvert(
   s: string,
@@ -70,7 +100,7 @@ export function coreKanaToHangulConvert(
   // 코드포인트 배열로 변환 (surrogate pair 문제 해결)
   const chars = Array.from(s);
   const origChars = Array.from(opts?.original ?? s);
-  
+
   // --- Hangul utilities ---
   const HANGUL_BASE = 0xac00;
   const HANGUL_END = 0xd7a3;
@@ -114,7 +144,6 @@ export function coreKanaToHangulConvert(
     return isHiragana(ch) || ch === "ー";
   }
 
-  
   type ReadMora = { key: string; len: number; info?: MoraInfo } | null;
 
   function readMoraAt(idx: number): ReadMora {
@@ -194,10 +223,13 @@ export function coreKanaToHangulConvert(
     const local = chars.slice(t.start, cpIdx + 1).join("");
     if (!local.endsWith("さん")) return false;
 
-    const hasPrefixInsideToken = (cpIdx - 1) > t.start;
+    const hasPrefixInsideToken = cpIdx - 1 > t.start;
     const p = prevToken();
     const prevIsAttachable =
-      !!p && p.end === t.start && p.surface.length > 0 && !HARD_BOUNDARY_SURF.has(p.surface);
+      !!p &&
+      p.end === t.start &&
+      p.surface.length > 0 &&
+      !HARD_BOUNDARY_SURF.has(p.surface);
 
     if (!hasPrefixInsideToken && !prevIsAttachable) return false;
 
@@ -215,7 +247,7 @@ export function coreKanaToHangulConvert(
 
   while (i < chars.length) {
     // 토큰 기반 "단어 시작" 정의: i가 content 토큰 start면 true
-     let atTokenStart = false;
+    let atTokenStart = false;
     let tokForI: TokenSpan | null = null;
 
     if (tokens) {
@@ -236,25 +268,28 @@ export function coreKanaToHangulConvert(
 
     // 긴 키부터 순회하므로, 앞에서 걸리면 끝
     for (const it of COMPILED_SPECIAL_DICT) {
-    const src = it.stream === "orig" ? origChars : chars; // chars=rewritten
-    const len = it.keyChars.length;
-    if (i + len > src.length) continue;
+      const src = it.stream === "orig" ? origChars : chars; // chars=rewritten
+      const len = it.keyChars.length;
+      if (i + len > src.length) continue;
 
-    let ok = true;
-    for (let k = 0; k < len; k++) {
-      if (src[i + k] !== it.keyChars[k]) { ok = false; break; }
+      let ok = true;
+      for (let k = 0; k < len; k++) {
+        if (src[i + k] !== it.keyChars[k]) {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok) continue;
+
+      out += it.answer;
+      i += len;
+
+      // 사전 치환은 단어 단위 => 상태 초기화
+      lastMora = null;
+
+      matchedSpecial = true;
+      break;
     }
-    if (!ok) continue;
-
-    out += it.answer;
-    i += len;
-
-    // 사전 치환은 단어 단위 => 상태 초기화
-    lastMora = null;
-
-    matchedSpecial = true;
-    break;
-  }
     if (matchedSpecial) continue;
 
     if (chars.slice(i, i + 3).join("") === "ちゃん") {
@@ -271,15 +306,13 @@ export function coreKanaToHangulConvert(
       continue;
     }
 
-
-
     if (ch === "っ") {
-       if (!out || !isHangulSyllable(out[out.length - 1])) {
-    out += "ッ";
-    i += 1;
-    lastMora = null;
-    continue;
-  }
+      if (!out || !isHangulSyllable(out[out.length - 1])) {
+        out += "ッ";
+        i += 1;
+        lastMora = null;
+        continue;
+      }
 
       const next = readMoraAt(i + 1);
 
@@ -415,17 +448,14 @@ export function coreKanaToHangulConvert(
         }
       }
 
-  const allowVoicing =
-    !prevIsSokuon &&
-    !blockedByNext &&
-    !isKou &&
-    !blockedByParticleUsage;
+      const allowVoicing =
+        !prevIsSokuon && !blockedByNext && !isKou && !blockedByParticleUsage;
 
-  if (allowVoicing) {
-    if (mora.key === "と") outSyl = "도";
-    else if (mora.key === "こ") outSyl = "고";
-  }
-}
+      if (allowVoicing) {
+        if (mora.key === "と") outSyl = "도";
+        else if (mora.key === "こ") outSyl = "고";
+      }
+    }
 
     out += outSyl;
     lastMora = { ...info, out: outSyl };
@@ -484,8 +514,6 @@ export function coreKanaToHangulConvert(
 
   return out;
 }
-
-
 
 function hiraToKata(hira: string): string {
   const c = hira.codePointAt(0)!;
