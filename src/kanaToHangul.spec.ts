@@ -225,13 +225,11 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
       expect(() => converter("っあ")).not.toThrow();
       expect(() => converter("！っか")).not.toThrow();
       expect(() => converter("「っ」")).not.toThrow();
-
-      // 정책: 단독 っ은 "ッ"
-      expect(converter("っ")).toBe("ッ");
     });
 
-    it("연속 촉음도 크래시 없이 처리된다", () => {
-      expect(converter("っっっか")).toBe("ッ");
+    it("미완성 촉음은 ッ으로 출력", () => {
+      expect(converter("っ")).toBe("ッ");
+      expect(converter("っっっか")).toBe("ッッッ카");
     });
   });
 

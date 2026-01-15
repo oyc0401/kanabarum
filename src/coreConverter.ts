@@ -212,7 +212,6 @@ export function coreKanaToHangulConvert(
   let i = 0;
 
   let lastMora: MoraInfo | null = null;
-  let leadingSokuon = false;
 
   while (i < chars.length) {
     // 토큰 기반 "단어 시작" 정의: i가 content 토큰 start면 true
@@ -252,7 +251,6 @@ export function coreKanaToHangulConvert(
 
     // 사전 치환은 단어 단위 => 상태 초기화
     lastMora = null;
-    leadingSokuon = false;
 
     matchedSpecial = true;
     break;
@@ -273,26 +271,15 @@ export function coreKanaToHangulConvert(
       continue;
     }
 
-    if (leadingSokuon) {
-      if (isHiragana(ch)) {
-        out += hiraToKata(ch);
-        i += 1;
-        leadingSokuon = false;
-        lastMora = null;
-        continue;
-      } else {
-        leadingSokuon = false;
-      }
-    }
+
 
     if (ch === "っ") {
-      if (!out || !isHangulSyllable(out[out.length - 1])) {
-        out += "ッ";
-        i += 1;
-        leadingSokuon = true;
-        lastMora = null;
-        continue;
-      }
+       if (!out || !isHangulSyllable(out[out.length - 1])) {
+    out += "ッ";
+    i += 1;
+    lastMora = null;
+    continue;
+  }
 
       const next = readMoraAt(i + 1);
 
