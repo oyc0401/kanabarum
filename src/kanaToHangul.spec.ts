@@ -112,7 +112,6 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
       expect(converter("きゅう")).toBe("큐");
       expect(converter("きょう")).toBe("쿄");
       expect(converter("しょくどう")).toBe("쇼쿠도");
-      expect(converter("にゃん")).toBe("냥");
       expect(converter("にゅうがく")).toBe("뉴가쿠");
       expect(converter("びょういん")).toBe("뵤인");
       expect(converter("ぴょん")).toBe("푱");
@@ -216,16 +215,16 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
       expect(converter("きっひょ")).toBe("킷효");
     });
 
-    it("문장 시작/단독/구두점 뒤 촉음은 크래시 없이 정책대로 처리한다", () => {
-      expect(() => converter("っ")).not.toThrow();
-      expect(() => converter("っあ")).not.toThrow();
-      expect(() => converter("！っか")).not.toThrow();
-      expect(() => converter("「っ」")).not.toThrow();
-    });
-
     it("미완성 촉음은 ッ으로 출력", () => {
       expect(converter("っ")).toBe("ッ");
       expect(converter("っっっか")).toBe("ッッッ카");
+    });
+
+    it("문장 시작/단독/구두점 뒤 촉음은 크래시 없이 정책대로 처리한다", () => {
+      expect(converter("っ")).toBe("ッ");
+      expect(converter("っあ")).toBe("ッ아");
+      expect(converter("！っか")).toBe("！ッ카");
+      expect(converter("「っ」")).toBe("「ッ」");
     });
   });
 
@@ -270,6 +269,7 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
     });
 
     it("요음 뒤 + 어말 ん은 ㅇ으로 처리된다(정책)", () => {
+      expect(converter("にゃん")).toBe("냥");
       expect(converter("しょん")).toBe("숑");
       expect(converter("みょん")).toBe("묭");
       expect(converter("にょん")).toBe("뇽");
@@ -307,36 +307,48 @@ describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
      * - 단, ている / ていく 등 문법 경계에서 てい를 잘못 드롭하면 안 됨(보호)
      */
 
-    it("o+う 계열 드롭(こう/とう/どう/よう)", () => {
+    it("o+う 계열 드롭(こう/とう/どう/よう) 중간", () => {
       expect(converter("さようなら")).toBe("사요나라");
-      expect(converter("おめでとう")).toBe("오메데토");
       expect(converter("どうぞ")).toBe("도조");
-      expect(converter("りょこう")).toBe("료코");
       expect(converter("ちょうど")).toBe("쵸도");
+    });
+
+    it("o+う 계열 드롭(こう/とう/どう/よう) 마지막", () => {
+      expect(converter("おめでとう")).toBe("오메데토");
+      expect(converter("りょこう")).toBe("료코");
       expect(converter("がっこう")).toBe("각코");
     });
 
     it("おお 반복은 축약된다", () => {
-      expect(converter("おおきい")).toBe("오키");
+      expect(converter("おおきい")).toBe("오키이");
       expect(converter("おおさか")).toBe("오사카");
       expect(converter("おおおお")).toBe("오");
     });
 
     it("えい/せい/けい 계열 い 드롭 + 예외가 맞다", () => {
-      expect(converter("せんせい")).toBe("센세");
       expect(converter("えいご")).toBe("에고");
       expect(converter("けいさつ")).toBe("케사츠");
+    });
 
+    it("せい계열 い 드롭 ", () => {
+      expect(converter("せんせい")).toBe("센세");
+      expect(converter("せいかつ")).toBe("세카츠");
+      expect(converter("せいぶつ")).toBe("세부츠");
+      expect(converter("せいしん")).toBe("세신");
+      expect(converter("せいり")).toBe("세리");
+      expect(converter("せいこう")).toBe("세코");
+      expect(converter("せいひん")).toBe("세힌");
+    });
+
+    it("えい/せい/けい 계열 い 드롭 예외", () => {
       // 예외(드롭 금지)
-      expect(converter("せいな")).toBe("세이나");
-      expect(converter("せいか")).toBe("세이카");
-      expect(converter("けいと")).toBe("케이토");
-      expect(converter("えいこ")).toBe("에이코");
+      expect(converter("がっこうへいく")).toBe("각코에이쿠");
+
+      expect(converter("おおきいなすいか")).toBe("오키이나스이카");
       expect(converter("こい")).toBe("코이");
       expect(converter("あい")).toBe("아이");
       expect(converter("うい")).toBe("우이");
     });
-
     it("ねえ 드롭이 적용된다", () => {
       expect(converter("おねえさん")).toBe("오네상");
       expect(converter("ねえさん")).toBe("네상");

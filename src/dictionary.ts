@@ -17,4 +17,5 @@ export const SpecialDictionary: SpecialDictionaryEntry[] = [
   { word: "つなみ", answer: "쓰나미" },
   { word: "ゆうり", answer: "유우리" },
   { word: "ミュージック", answer: "뮤지쿠" },
+  { word: "ちゃん", answer: "쨩" },
 ];

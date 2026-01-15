@@ -1,9 +1,9 @@
 // coreConverter.ts
-import { SpecialDictionary, SpecialDictionaryEntry } from "./dictionary";
-import { HARD_BOUNDARY_SURF, TokenSpan } from "./particleRewriter";
+import { SpecialDictionary, type SpecialDictionaryEntry } from "./dictionary";
+import { HARD_BOUNDARY_SURF, type TokenSpan } from "./particleRewriter";
 import {
-  ConsClass,
-  MoraInfo,
+  type ConsClass,
+  type MoraInfo,
   SINGLE,
   YOUON,
   LOAN,
@@ -95,7 +95,7 @@ function isKana(ch: string): boolean {
 
 export function coreKanaToHangulConvert(
   s: string,
-  opts?: { tokens?: TokenSpan[]; original?: string },
+  opts: { tokens: TokenSpan[]; original: string },
 ): string {
   // 코드포인트 배열로 변환 (surrogate pair 문제 해결)
   const chars = Array.from(s);
@@ -151,6 +151,30 @@ export function coreKanaToHangulConvert(
 
     const c0 = chars[idx];
     const c1 = chars[idx + 1];
+
+    if (c1 && SMALL_V.has(c1)) {
+      const key2 = c0 + c1;
+      const info = LOAN[key2];
+      if (info) return { key: key2, len: 2, info };
+    }
+
+    if (c1 && SMALL_Y.has(c1)) {
+      const key2 = c0 + c1;
+      const info = YOUON[key2];
+      if (info) return { key: key2, len: 2, info };
+    }
+
+    const info = SINGLE[c0];
+    if (info) return { key: c0, len: 1, info };
+
+    return { key: c0, len: 1, info: undefined };
+  }
+
+  function readOriginalMoraAt(idx: number): ReadMora {
+    if (idx >= origChars.length) return null;
+
+    const c0 = origChars[idx];
+    const c1 = origChars[idx + 1];
 
     if (c1 && SMALL_V.has(c1)) {
       const key2 = c0 + c1;
@@ -292,22 +316,32 @@ export function coreKanaToHangulConvert(
     }
     if (matchedSpecial) continue;
 
-    if (chars.slice(i, i + 3).join("") === "ちゃん") {
-      out += "쨩";
-      i += 3;
-      lastMora = { out: "쨩", vowelMain: "a", consClass: "t", wasYouon: true };
-      continue;
-    }
-
     const ch = chars[i];
 
+    /**
+     * ー 표시는 그냥 드랍
+     */
     if (ch === "ー") {
       i += 1;
       continue;
     }
 
+    /**
+     * 비가나: 그대로
+     */
+    if (!isKana(ch)) {
+      out += ch;
+      i += 1;
+      lastMora = null;
+      continue;
+    }
+
+    /**
+     * 촉음 규칙
+     */
     if (ch === "っ") {
       if (!out || !isHangulSyllable(out[out.length - 1])) {
+        // "ッ"으로 바꾸기
         out += "ッ";
         i += 1;
         lastMora = null;
@@ -333,15 +367,9 @@ export function coreKanaToHangulConvert(
       continue;
     }
 
-    // 비가나: 그대로
-    if (!isKana(ch)) {
-      out += ch;
-      i += 1;
-      lastMora = null;
-      continue;
-    }
-
-    // おお...
+    /**
+     * おお 장음 규칙
+     */
     if (ch === "お" && chars[i + 1] === "お") {
       let j = i;
       while (chars[j] === "お") j++;
@@ -357,14 +385,21 @@ export function coreKanaToHangulConvert(
     }
 
     const mora = readMoraAt(i);
+    const originalMora = readOriginalMoraAt(i);
     if (!mora) {
       out += chars[i];
       i += 1;
       lastMora = null;
       continue;
     }
+    // 에러
+    if (!originalMora) {
+      throw Error("원본 모라 손실");
+    }
 
-    // ん
+    /**
+     * ん 규칙
+     */
     if (mora.key === "ん") {
       const next = readMoraAt(i + 1);
       const nextInfo = next?.info;
@@ -378,7 +413,7 @@ export function coreKanaToHangulConvert(
         continue;
       }
 
-      // ✅ 토큰 컨텍스트 기반 "-san" → '상'
+      // 토큰 컨텍스트 기반 "-san" → '상'
       if (lastMora?.out === "사" && isSanHonorificAt(i)) {
         out = replaceLastHangul(out, JONG.NG);
         i += 1;
@@ -408,6 +443,9 @@ export function coreKanaToHangulConvert(
       continue;
     }
 
+    /**
+     * 유성화 규칙
+     */
     const info = mora.info;
     if (!info) {
       out += mora.key;
@@ -460,8 +498,11 @@ export function coreKanaToHangulConvert(
     out += outSyl;
     lastMora = { ...info, out: outSyl };
 
-    const next1 = chars[i + mora.len];
-    const afterLen = chars[i + mora.len + 1];
+    /**
+     * 연음 드랍
+     */
+    const next1 = chars[i + mora.len]; // 다음 언어
+    const afterLen = chars[i + mora.len + 1]; // 다다음언어
 
     // o + う 드랍
     if (next1 === "う" && info.vowelMain === "o") {
@@ -469,41 +510,40 @@ export function coreKanaToHangulConvert(
       continue;
     }
 
-    if (next1 === "う" && (mora.key === "ゆ" || U_DROP_KEYS.has(mora.key))) {
+    // ゅう 드랍 (きゅう) // ゆう는 드랍할까말까? (유우리) 일단 ゆう도 드랍함!
+    if (next1 === "う" && U_DROP_KEYS.has(mora.key)) {
       i += mora.len + 1;
       continue;
     }
 
+    // い 드랍
     if (next1 === "い") {
+      // せんせい -> 센세
       if (mora.key === "せ") {
-        if (afterLen !== "な" && afterLen !== "か") {
-          i += mora.len + 1;
-          continue;
-        }
-      } else if (mora.key === "け") {
-        if (afterLen !== "と") {
-          i += mora.len + 1;
-          continue;
-        }
-      } else if (mora.key === "え") {
-        if (afterLen !== "こ" && afterLen !== "く" && afterLen !== "き") {
-          i += mora.len + 1;
-          continue;
-        }
-      } else if (mora.key === "じ") {
         i += mora.len + 1;
         continue;
-      } else if (mora.key === "き") {
-        if (!afterLen) {
+      }
+      // 케도 장음인데, 케이사츠라고 검색하는 경우가 더 많으려나? 어떻게 할까...
+      else if (mora.key === "け") {
+        i += mora.len + 1;
+        continue;
+      }
+      // えいご -> 에고
+      else if (mora.key === "え") {
+        // 조사 へ 감지
+        if (originalMora.key !== "へ") {
           i += mora.len + 1;
           continue;
         }
-      } else if (mora.key === "し") {
+      }
+      // 오이시, 야사시 대응
+      else if (mora.key === "し") {
         i += mora.len + 1;
         continue;
       }
     }
 
+    // おねえさん 대응
     if (next1 === "え" && mora.key === "ね") {
       i += mora.len + 1;
       continue;
@@ -513,12 +553,4 @@ export function coreKanaToHangulConvert(
   }
 
   return out;
-}
-
-function hiraToKata(hira: string): string {
-  const c = hira.codePointAt(0)!;
-  if (c >= 0x3041 && c <= 0x3096) {
-    return String.fromCodePoint(c + 0x60);
-  }
-  return hira;
 }
