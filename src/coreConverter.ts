@@ -26,9 +26,17 @@ function isKatakanaChar(ch: string) {
 function toHiraganaKey(s: string): string {
   const n = s.normalize("NFKC");
   return Array.from(n)
-    .map((ch) =>
-      isKatakanaChar(ch) ? String.fromCodePoint(ch.codePointAt(0)! - 0x60) : ch,
-    )
+    .map((ch) => {
+      // 장음은 그대로 유지
+      if (ch === "ー") return ch;
+      if (!isKatakanaChar(ch)) return ch;
+      const code = ch.codePointAt(0)!;
+      // カタカナ 문자 범위 (ァ~ヶ)만 변환
+      if (code >= 0x30a1 && code <= 0x30f6) {
+        return String.fromCodePoint(code - 0x60);
+      }
+      return ch;
+    })
     .join("");
 }
 function toKatakanaKey(s: string): string {
