@@ -1,11 +1,12 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { KanaBarum, kanaToHangul, type KanaToHangul } from "./kanaBarum";
+import { Kanabarum, kanaToHangul } from "./kanaBarum";
 
-let converter: KanaToHangul;
+const kanabarum = new Kanabarum();
+const converter = (input: string) => kanabarum.kanaToHangul(input);
 
 beforeAll(async () => {
-  converter = await KanaBarum.init();
+  await kanabarum.init();
 });
 
 describe("KanaBarum - Kana→Hangul 변환 스펙", () => {
