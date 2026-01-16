@@ -1,6 +1,6 @@
 {
   "name": "kanabarum",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "일본어 가나를 한국어 발음으로 바꿔주는 변환기",
   "type": "module",
   "main": "./dist/index.js",
@@ -9,7 +9,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     }
   },
   "files": [
