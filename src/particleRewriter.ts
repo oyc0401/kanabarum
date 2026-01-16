@@ -10,12 +10,30 @@ function isKatakanaChar(ch: string) {
   const c = ch.codePointAt(0)!;
   return c >= 0x30a0 && c <= 0x30ff;
 }
+
+function containsKanji(s: string): boolean {
+  for (const ch of s) {
+    const c = ch.codePointAt(0)!;
+    // CJK Unified Ideographs (U+4E00-U+9FFF) + Extension A (U+3400-U+4DBF)
+    if ((c >= 0x4e00 && c <= 0x9fff) || (c >= 0x3400 && c <= 0x4dbf)) {
+      return true;
+    }
+  }
+  return false;
+}
 function toHiragana(s: string): string {
   const n = s.normalize("NFKC");
   return Array.from(n)
     .map((ch) => {
+      // 장음은 드랍
+      if (ch === "ー") return "";
       if (!isKatakanaChar(ch)) return ch;
-      return String.fromCodePoint(ch.codePointAt(0)! - 0x60);
+      const code = ch.codePointAt(0)!;
+      // カタカナ 문자 범위 (ァ~ヶ)만 변환
+      if (code >= 0x30a1 && code <= 0x30f6) {
+        return String.fromCodePoint(code - 0x60);
+      }
+      return ch;
     })
     .join("");
 }
@@ -154,7 +172,7 @@ export function rewriteParticlesFromTokenization(
   originalText: string,
   hiraganaText: string,
   tokenizerTokens: kuromoji.IpadicFeatures[],
-): { rewritten: string; spans: TokenSpan[] } {
+): { rewritten: string; spans: TokenSpan[]; rewrittenOriginal: string } {
   // 코드포인트 배열로 변환 (kuromoji word_position이 코드포인트 기준)
   const hiraChars = Array.from(hiraganaText);
   const originChars = Array.from(originalText);
@@ -166,6 +184,7 @@ export function rewriteParticlesFromTokenization(
   );
 
   let out = "";
+  let origOut = ""; // 한자→pronunciation 변환된 원본
   const spans: TokenSpan[] = [];
 
   let cursorInText = 0;
@@ -181,7 +200,15 @@ export function rewriteParticlesFromTokenization(
     const end = start + surfCpLen;
     cursorInText = end;
 
-    const hiraSurf = hiraChars.slice(start, end).join("");
+    // 한자가 포함된 경우 pronunciation을 사용
+    const hasKanji = containsKanji(surf) && tok.pronunciation;
+    const hiraSurf = hasKanji
+      ? toHiragana(tok.pronunciation!)
+      : hiraChars.slice(start, end).join("");
+    // 원본도 한자면 pronunciation에서 장음 제거 (길이 맞추기)
+    const origSurfForOut = hasKanji
+      ? tok.pronunciation!.replace(/ー/g, "")
+      : originChars.slice(start, end).join("");
     const originSurf = originChars.slice(start, end).join("");
 
     const originHadKatakana = /[\u30A0-\u30FF]/.test(originSurf);
@@ -191,6 +218,7 @@ export function rewriteParticlesFromTokenization(
     if (isProtectedSpan(protectedRanges, start, end)) {
       const outCpStart = [...out].length;
       out += hiraSurf;
+      origOut += origSurfForOut;
       spans.push({
         start: outCpStart,
         end: [...out].length,
@@ -279,6 +307,7 @@ export function rewriteParticlesFromTokenization(
 
     const outCpStart = [...out].length;
     out += replaced;
+    origOut += origSurfForOut;
 
     spans.push({
       start: outCpStart,
@@ -292,7 +321,7 @@ export function rewriteParticlesFromTokenization(
     });
   }
 
-  return { rewritten: out, spans };
+  return { rewritten: out, spans, rewrittenOriginal: origOut };
 }
 
 /**
@@ -307,14 +336,12 @@ export function tokenizeAndRewriteParticles(
 ): {
   rewritten: string;
   spans: TokenSpan[];
+  rewrittenOriginal: string;
   rawTokens: kuromoji.IpadicFeatures[];
 } {
   const rawTokens = tokenizer.tokenize(originalText);
-  //  console.log(rawTokens)
-  const { rewritten, spans } = rewriteParticlesFromTokenization(
-    originalText,
-    hiraganaText,
-    rawTokens,
-  );
-  return { rewritten, spans, rawTokens };
+  // console.log(rawTokens);
+  const { rewritten, spans, rewrittenOriginal } =
+    rewriteParticlesFromTokenization(originalText, hiraganaText, rawTokens);
+  return { rewritten, spans, rewrittenOriginal, rawTokens };
 }

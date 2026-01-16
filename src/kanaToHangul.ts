@@ -21,15 +21,16 @@ export function convertWithTokenizer(
   const hiragana = toHiragana(normalized);
 
   // ✅ 핵심: prewrite 이전에 토큰화(=normalized 기준), prewrite는 토큰(pos)을 사용하되 slice는 hiragana 기준
-  const { rewritten, spans } = tokenizeAndRewriteParticles(
+  const { rewritten, spans, rewrittenOriginal } = tokenizeAndRewriteParticles(
     normalized,
     hiragana,
     tokenizer,
   );
 
   // ✅ rewritten + rewritten spans 로 core
+  // 한자가 pronunciation으로 변환된 경우 rewrittenOriginal도 같은 길이로 변환됨
   return coreKanaToHangulConvert(rewritten, {
     tokens: spans,
-    original: normalized, // ✅ 이게 핵심
+    original: rewrittenOriginal,
   });
 }

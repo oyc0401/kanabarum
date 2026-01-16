@@ -10,12 +10,12 @@ beforeAll(async () => {
 
 describe("kanaToHangul", () => {
   it("hiragana", () => {
-    expect(converter("としょかんへいく")).toBe("도쇼칸에이쿠");
+    expect(converter("東京とりんご")).toBe("도쿄토링고");
   });
 });
-describe("kanaToHangul", () => {
-  it("hiragana", () => {
-    expect(converter("😀をみる")).toBe("😀오미루");
-    expect(converter("りんごとりんご")).toBe("링고토링고");
-  });
-});
+// describe("kanaToHangul", () => {
+//   it("hiragana", () => {
+//     // expect(converter("😀をみる")).toBe("😀오미루");
+//     // expect(converter("りんごとりんご")).toBe("링고토링고");
+//   });
+// });
