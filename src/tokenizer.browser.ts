@@ -1,19 +1,15 @@
 import kuromoji from "kuromoji";
-import path from "node:path";
-import { createRequire } from "node:module";
-
-const req = createRequire(import.meta.url);
 
 export type Tokenizer = kuromoji.Tokenizer<kuromoji.IpadicFeatures>;
 
 async function buildTokenizer(): Promise<Tokenizer> {
   return new Promise((resolve, reject) => {
-    const dicPath = path.join(req.resolve("kuromoji"), "..", "..", "dict");
-
-    kuromoji.builder({ dicPath }).build((err, tk) => {
-      if (err || !tk) reject(err);
-      else resolve(tk);
-    });
+    kuromoji
+      .builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/" })
+      .build((err, tk) => {
+        if (err || !tk) reject(err);
+        else resolve(tk);
+      });
   });
 }
 
