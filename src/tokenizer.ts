@@ -13,7 +13,7 @@ async function buildTokenizer(): Promise<Tokenizer> {
     const req = createRequire(import.meta.url);
     dicPath = path.join(req.resolve("kuromoji"), "..", "..", "dict");
   } else {
-    dicPath = "/dict/";
+    dicPath = "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/";
   }
 
   return new Promise((resolve, reject) => {
