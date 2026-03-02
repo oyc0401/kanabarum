@@ -1,14 +1,22 @@
 import kuromoji from "kuromoji";
-import path from "node:path";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
 
 export type Tokenizer = kuromoji.Tokenizer<kuromoji.IpadicFeatures>;
 
 async function buildTokenizer(): Promise<Tokenizer> {
+  const isNode =
+    typeof process !== "undefined" && typeof process.versions?.node === "string";
+
+  let dicPath: string;
+  if (isNode) {
+    const { default: path } = await import("node:path");
+    const { createRequire } = await import("node:module");
+    const req = createRequire(import.meta.url);
+    dicPath = path.join(req.resolve("kuromoji"), "..", "..", "dict");
+  } else {
+    dicPath = "/dict/";
+  }
+
   return new Promise((resolve, reject) => {
-    const dicPath = path.join(require.resolve("kuromoji"), "..", "..", "dict");
 
     kuromoji.builder({ dicPath }).build((err, tk) => {
       if (err || !tk) reject(err);
