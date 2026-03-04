@@ -21,6 +21,12 @@ export default defineConfig([
     platform: "browser",
     treeshake: true,
     noExternal: ["kuromoji"],
+    esbuildOptions(options) {
+      options.alias = {
+        ...options.alias,
+        path: "path-browserify",
+      };
+    },
     tsconfig: "./tsconfig.json",
   },
 ]);
