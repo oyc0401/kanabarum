@@ -20,6 +20,7 @@ export default defineConfig([
     target: "es2020",
     platform: "browser",
     treeshake: true,
+    noExternal: ["kuromoji"],
     tsconfig: "./tsconfig.json",
   },
 ]);
